@@ -107,7 +107,7 @@ def get_scale_factor(width, height):
 
 ## Code Execution
 
-**Status:** Beta | **Header:** `code-execution-2025-08-25`
+**Status:** GA | **Header:** None required (formerly `code-execution-2025-08-25`)
 
 Sandboxed Python environment for computation, data analysis, and file
 generation.
@@ -137,8 +137,8 @@ Enable both code execution and skills headers for document generation.
 
 ## Programmatic Tool Calling
 
-**Status:** Beta | **Header:** `advanced-tool-use-2025-11-20`
-**Models:** Opus 4.5, Sonnet 4.5
+**Status:** GA | **Header:** None required (formerly `advanced-tool-use-2025-11-20`)
+**Models:** Opus 4.6, Sonnet 4.6, Sonnet 4.5, Opus 4.5
 
 Claude writes Python code that calls tools programmatically within the code
 execution container, without model round-trips.
@@ -203,9 +203,9 @@ tools = [{"type": "web_search_20250305", "name": "web_search"}]
 
 ## Web Fetch
 
-**Status:** Beta | **Header:** Required
+**Status:** GA | **Header:** None required
 
-Fetch and read content from URLs.
+Fetch and read content from URLs. Supports dynamic filtering with code execution.
 
 ```python
 tools = [{"type": "web_fetch_20250305", "name": "web_fetch"}]
@@ -218,7 +218,7 @@ as text for Claude to process.
 
 ## Tool Search
 
-**Status:** Beta | **Models:** Sonnet 4+, Opus 4+
+**Status:** GA | **Models:** Sonnet 4+, Opus 4+
 
 Dynamic tool discovery via regex search. Scales to thousands of tools without
 loading all definitions into context.
@@ -307,7 +307,7 @@ use them. Reduces initial context usage for large toolsets.
 
 ## Memory Tool
 
-**Status:** Beta | **Header:** `context-management-2025-06-27`
+**Status:** GA | **Header:** None required (formerly `context-management-2025-06-27`)
 
 See `references/api-features.md` for full memory tool documentation including
 commands and security requirements.
@@ -348,10 +348,9 @@ Available as a built-in tool in Claude Code and Agent SDK contexts.
 
 ---
 
-## Tool Use Examples (Beta)
+## Tool Use Examples (GA)
 
-**Header:** `advanced-tool-use-2025-11-20` (API, Foundry)
-**Alternate header:** `tool-examples-2025-10-29` (Vertex AI, Bedrock — Opus 4.5 only)
+No header required (formerly `advanced-tool-use-2025-11-20`).
 
 Provide examples of expected tool inputs to improve tool call quality:
 

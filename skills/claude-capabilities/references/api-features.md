@@ -271,8 +271,8 @@ content = client.beta.files.download(file.id)
 
 ## Memory Tool
 
-**Status:** Beta | **Header:** `context-management-2025-06-27`
-**Models:** Sonnet 4.5, Sonnet 4, Haiku 4.5, Opus 4.5, Opus 4.1, Opus 4
+**Status:** GA | **Header:** None required (formerly `context-management-2025-06-27`)
+**Models:** All current models
 
 ```python
 tools = [{"type": "memory_20250818", "name": "memory"}]
@@ -401,11 +401,11 @@ whether content fits within context window limits.
 | Prompt caching | GA | GA | GA | GA |
 | Batch processing | GA | GA | GA | Varies |
 | Files API | Beta | - | - | - |
-| Memory tool | Beta | - | - | - |
+| Memory tool | GA | - | - | - |
 | MCP connector | Beta | - | - | - |
 | Computer use | Beta | Beta | Beta | Beta |
 | 1M context | Beta | Check | Check | Check |
-| Tool search | Beta | - | - | - |
+| Tool search | GA | - | - | - |
 
 Dash (-) indicates not currently available on that platform. "Check" indicates
 support may have been added since last update.
