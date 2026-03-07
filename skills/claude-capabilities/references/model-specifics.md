@@ -4,7 +4,7 @@ Per-model capability matrix, pricing, limits, and migration guidance.
 Consult when choosing between models, planning migrations, or understanding
 model-specific behaviour.
 
-**Last updated:** 2026-02-10
+**Last updated:** 2026-03-07
 
 ## Table of Contents
 
@@ -25,40 +25,38 @@ model-specific behaviour.
 
 ## Model Overview
 
-| Model | Release | Positioning |
-|-------|---------|-------------|
-| Claude Opus 4.6 | 2026-02 | Flagship. Highest capability, adaptive thinking, 128K output |
-| Claude Sonnet 4.5 | 2025-09 | Balanced. Interleaved thinking, strong coding, cost-effective |
-| Claude Haiku 4.5 | 2025-10 | Fast. Low latency, cost-efficient, no extended thinking |
-| Claude Opus 4.5 | 2025-11 | High capability. Extended thinking, 32K output |
+| Model | Release | Positioning | Status |
+|-------|---------|-------------|--------|
+| Claude Opus 4.6 | 2026-02 | Flagship. Highest capability, adaptive thinking, 128K output | **Current** |
+| Claude Sonnet 4.6 | 2026-02 | Balanced. Speed + intelligence, adaptive thinking, 64K output | **Current** |
+| Claude Haiku 4.5 | 2025-10 | Fast. Low latency, cost-efficient, extended thinking | **Current** |
+| Claude Sonnet 4.5 | 2025-09 | Previous balanced model. Interleaved thinking, strong coding | Legacy |
+| Claude Opus 4.5 | 2025-11 | Previous flagship. Extended thinking, 32K output | Legacy |
 
 ---
 
 ## Capability Matrix
 
-| Capability | Opus 4.6 | Sonnet 4.5 | Haiku 4.5 | Opus 4.5 |
-|------------|----------|------------|-----------|----------|
-| Context window | 200K (1M beta) | 200K (1M beta) | 200K (1M beta) | 200K (1M beta) |
-| Max output tokens | 128K | 64K | 64K | 32K |
-| Extended thinking | Yes (adaptive) | Yes (budget) | No | Yes (budget) |
-| Interleaved thinking | Yes (auto) | Yes (auto) | No | No |
-| Adaptive thinking | Yes | No | No | No |
-| Effort: max | Yes | No | No | No |
-| Effort: low/med/high | Yes | Yes | Yes | Yes |
-| Prefill support | **No** (removed) | **No** | **No** | **No** |
-| Structured outputs | Yes | Yes (GA) | Yes (GA) | Yes (GA) |
-| Computer use | Yes (v20251124) | Yes (v20250124) | Yes (v20250124) | Yes (v20251124) |
-| Zoom action | Yes | No | No | Yes |
-| Tool search | Yes | Yes | No | Yes |
-| Code execution | Yes | Yes | Yes | Yes |
-| Programmatic tool calling | No | Yes | No | Yes |
-| Memory tool | Yes | Yes | Yes | Yes |
-| Web search | Yes | Yes | Yes | Yes |
-| Citations | Yes | Yes | Yes | Yes |
-| Batch processing | Yes | Yes | Yes | Yes |
-| Prompt caching | Yes | Yes | Yes | Yes |
-| Data residency | Yes | No | No | No |
-| Context awareness | No | Yes | Yes | No |
+| Capability | Opus 4.6 | Sonnet 4.6 | Haiku 4.5 | Sonnet 4.5 (legacy) | Opus 4.5 (legacy) |
+|------------|----------|------------|-----------|---------------------|-------------------|
+| Context window | 200K (1M beta) | 200K (1M beta) | 200K | 200K (1M beta) | 200K (1M beta) |
+| Max output tokens | 128K | 64K | 64K | 64K | 32K |
+| Extended thinking | Yes (adaptive) | Yes (adaptive) | Yes (budget) | Yes (budget) | Yes (budget) |
+| Interleaved thinking | Yes (auto) | Yes (auto) | No | Yes (auto) | No |
+| Adaptive thinking | Yes | Yes | No | No | No |
+| Effort: max | Yes | No | No | No | No |
+| Effort: low/med/high | Yes | Yes | Yes | Yes | Yes |
+| Structured outputs | Yes | Yes | Yes | Yes | Yes |
+| Computer use | Yes (v20251124) | Yes | Yes (v20250124) | Yes (v20250124) | Yes (v20251124) |
+| Tool search (GA) | Yes | Yes | No | Yes | Yes |
+| Code execution (GA) | Yes | Yes | Yes | Yes | Yes |
+| Programmatic tool calling (GA) | Yes | Yes | No | Yes | Yes |
+| Memory tool (GA) | Yes | Yes | Yes | Yes | Yes |
+| Web search (GA) | Yes | Yes | Yes | Yes | Yes |
+| Dynamic filtering | Yes | Yes | No | No | No |
+| Batch processing | Yes | Yes | Yes | Yes | Yes |
+| Prompt caching | Yes | Yes | Yes | Yes | Yes |
+| Data residency | Yes | No | No | No | No |
 
 ---
 
@@ -67,9 +65,10 @@ model-specific behaviour.
 | Model | Full ID | Alias |
 |-------|---------|-------|
 | Opus 4.6 | `claude-opus-4-6` | `claude-opus-4-6-20260210` |
-| Sonnet 4.5 | `claude-sonnet-4-5-20250929` | `claude-sonnet-4-5` |
+| Sonnet 4.6 | `claude-sonnet-4-6` | `claude-sonnet-4-6` |
 | Haiku 4.5 | `claude-haiku-4-5-20251001` | `claude-haiku-4-5` |
-| Opus 4.5 | `claude-opus-4-5-20251101` | `claude-opus-4-5` |
+| Sonnet 4.5 (legacy) | `claude-sonnet-4-5-20250929` | `claude-sonnet-4-5` |
+| Opus 4.5 (legacy) | `claude-opus-4-5-20251101` | `claude-opus-4-5` |
 
 In Claude Code / Agent SDK, use short names: `opus`, `sonnet`, `haiku`
 (resolves to latest version of each tier).
@@ -83,10 +82,11 @@ docs.anthropic.com as prices may change.
 
 | Model | Input | Output | Cached Input |
 |-------|-------|--------|-------------|
-| Opus 4.6 | $15 | $75 | $1.50 |
-| Sonnet 4.5 | $3 | $15 | $0.30 |
-| Haiku 4.5 | $0.80 | $4 | $0.08 |
-| Opus 4.5 | $15 | $75 | $1.50 |
+| Opus 4.6 | $5 | $25 | $0.50 |
+| Sonnet 4.6 | $3 | $15 | $0.30 |
+| Haiku 4.5 | $1 | $5 | $0.10 |
+| Sonnet 4.5 (legacy) | $3 | $15 | $0.30 |
+| Opus 4.5 (legacy) | $15 | $75 | $1.50 |
 
 **Additional pricing factors:**
 - 1M context (beyond 200K): 2x input, 1.5x output
@@ -130,9 +130,10 @@ calls. This helps the model manage its own context budget.
 | Model | Standard Max | Notes |
 |-------|-------------|-------|
 | Opus 4.6 | 128,000 | Requires streaming for large values |
-| Sonnet 4.5 | 64,000 | — |
+| Sonnet 4.6 | 64,000 | — |
 | Haiku 4.5 | 64,000 | — |
-| Opus 4.5 | 32,000 | — |
+| Sonnet 4.5 (legacy) | 64,000 | — |
+| Opus 4.5 (legacy) | 32,000 | — |
 
 Set via `max_tokens` parameter. For Opus 4.6 with values above ~16K,
 streaming is recommended to avoid timeouts.

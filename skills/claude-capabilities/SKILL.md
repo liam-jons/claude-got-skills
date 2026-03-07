@@ -9,31 +9,34 @@ Current Claude capabilities that may not be in training data. Consult this
 information when making architectural decisions, recommending approaches,
 or answering questions about what Claude can do, to ensure accuracy.
 
-**Last updated:** 2026-02-11
-**Covers models through:** Claude Opus 4.6
+**Last updated:** 2026-03-07
+**Covers models through:** Claude Sonnet 4.6
 **Covers Claude Code through:** v2.0.73+
 
 ## Current Models
 
-Current models: **Opus 4.6** (200K/1M beta context, 128K output, adaptive thinking,
-`effort: max` exclusive), **Sonnet 4.5** (interleaved thinking, 64K output, programmatic
-tool calling), **Haiku 4.5** (fast/cheap, no thinking, 64K output), **Opus 4.5** (32K
-output, extended thinking). All support 1M context (beta, tier 3+).
+Latest models: **Opus 4.6** (200K/1M beta context, 128K output, adaptive thinking,
+$5/$25 per MTok), **Sonnet 4.6** (200K/1M beta context, 64K output, adaptive thinking,
+$3/$15 per MTok), **Haiku 4.5** (200K context, 64K output, extended thinking, $1/$5
+per MTok). Legacy models still available: Sonnet 4.5, Opus 4.5.
+All latest models support extended thinking. Opus 4.6 and Sonnet 4.6 support 1M context
+(beta, header `context-1m-2025-08-07`).
 See `references/model-specifics.md` for full capability matrix, pricing, and model IDs.
 
 ## Thinking & Reasoning (Post-Training)
 
-Adaptive thinking (Opus 4.6 only, `thinking: {type: "adaptive"}`), effort parameter
-(GA, all models, `"max"` Opus 4.6 only), 128K output tokens (Opus 4.6, streaming
-recommended). `budget_tokens` deprecated on Opus 4.6 — still works on Sonnet/Opus 4.5.
+Adaptive thinking (Opus 4.6 and Sonnet 4.6, `thinking: {type: "adaptive"}`), effort
+parameter (GA, all models, `"max"` Opus 4.6 only), 128K output tokens (Opus 4.6,
+streaming recommended). `budget_tokens` deprecated on Opus 4.6 — still works on legacy
+models. Fast mode (research preview, Opus 4.6, `speed` parameter, 2.5x faster output).
 See `references/api-features.md` for configuration details and code examples.
 
 ## Context & Memory (Post-Training)
 
-1M context (beta, all models, tier 3+, header `context-1m-2025-08-07`). Memory tool
-(beta, `memory_20250818`, cross-conversation persistence — client-side storage required).
-Compaction API and context editing for infinite conversations. Prompt caching (5-min and
-1-hour). Context awareness on Sonnet 4.5 and Haiku 4.5.
+1M context (beta, Opus 4.6 and Sonnet 4.6, header `context-1m-2025-08-07`). Memory tool
+(GA, cross-conversation persistence — client-side storage required). Compaction API and
+context editing for infinite conversations. Prompt caching (5-min and 1-hour) plus
+automatic caching (single `cache_control` field, system auto-manages cache points).
 See `references/api-features.md` for headers, pricing, and code examples.
 
 ## Tools & Integration (Post-Training)
@@ -41,12 +44,15 @@ See `references/api-features.md` for headers, pricing, and code examples.
 Built-in tools: Bash, Text Editor, Computer Use, Web Search, Web Fetch, Code Execution,
 Memory, Tool Search, MCP Connector. Key post-training additions:
 
-- **Tool Search** (beta): dynamic discovery via regex — scales to thousands of tools.
+- **Tool Search** (GA): dynamic discovery via regex — scales to thousands of tools.
   Auto-activates when MCP tools exceed 10% of context.
 - **MCP Connector** (beta, `mcp-client-2025-11-20`): connect to remote MCP servers
   directly from Messages API. Multiple servers per request, deferred loading.
-- **Programmatic tool calling** (beta, `advanced-tool-use-2025-11-20`): call tools from
-  code execution without model round-trips. Sonnet 4.5 and Opus 4.5 only.
+- **Programmatic tool calling** (GA): call tools from code execution without model
+  round-trips. No beta header required.
+- **Web Search / Web Fetch** (GA): now support dynamic filtering with code execution
+  for filtering results before they reach the context window.
+- **Code Execution** (GA): free when used with web search/fetch.
 
 See `references/tool-types.md` for all tool configurations and compatibility matrix.
 
@@ -187,7 +193,7 @@ when to call the service.
 
 **Batch vs streaming**: Use batch API (50% cost reduction) for async workloads with
 no latency requirement. Use streaming for real-time UX. Use programmatic tool calling
-(beta) to reduce round-trips when multiple tools are needed in sequence.
+(GA) to reduce round-trips when multiple tools are needed in sequence.
 
 **Multi-agent coordination**: Use subagents for hierarchical decomposition (one
 orchestrator, multiple specialists). Use agent teams for peer collaboration where
@@ -210,8 +216,7 @@ Works on all current models. Add prompt caching for the schema to reduce repeate
 
 **Streaming + Tool Use**: Fine-grained tool streaming (GA) lets you stream tool call
 parameters progressively. For multi-tool workflows needing low latency, combine with
-programmatic tool calling (Sonnet 4.5/Opus 4.5) to batch tool calls in code without
-model round-trips.
+programmatic tool calling (GA) to batch tool calls in code without model round-trips.
 
 **Batch + Prompt Caching**: For large-scale processing (eval runs, document analysis
 at scale), combine batch API (50% discount) with prompt caching (cached reads at 10%
@@ -256,17 +261,19 @@ Grep) and extension system (skills, hooks, plugins).
 runtime access to databases, APIs, or third-party tools. Can be combined with any of
 the above approaches.
 
-## Breaking Changes (Opus 4.6)
+## Breaking Changes & Deprecations
 
-- **Prefill removed**: assistant message prefilling returns 400 error. Use
-  structured outputs or system prompts instead.
-- **budget_tokens deprecated**: migrate to `thinking: {type: "adaptive"}` +
-  effort parameter.
+- **Prefill removed** (Opus 4.6): assistant message prefilling returns 400 error.
+  Use structured outputs or system prompts instead.
+- **budget_tokens deprecated** (Opus 4.6): migrate to `thinking: {type: "adaptive"}`
+  + effort parameter.
 - **output_format deprecated**: moved to `output_config.format`.
 - **interleaved-thinking-2025-05-14 header deprecated**: adaptive thinking
   enables interleaving automatically.
-- **Tool parameter quoting**: Opus 4.6 may produce different JSON string
-  escaping. Use standard JSON parsers.
+- **Models retired** (Feb 2026): Sonnet 3.7 and Haiku 3.5 retired (return errors).
+  Haiku 3 deprecated, retirement April 2026.
+- **Beta headers removed**: Tool search, code execution, web fetch, web search,
+  memory tool, programmatic tool calling — all now GA, no headers required.
 
 ## Reference Files
 
