@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.claude-capabilities.freshness-check</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/liamj/Documents/development/claude-got-skills/claude-capabilities/pipeline/run-freshness-check.sh</string>
+    </array>
+
+    <!-- Twice daily: 09:00 and 21:00 -->
+    <!-- Note: if Mac is sleeping at scheduled time, job runs on wake (catch-up for most recent interval only) -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Hour</key>
+            <integer>9</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Hour</key>
+            <integer>21</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/liamj/Documents/development/claude-got-skills/claude-capabilities</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/liamj/Documents/development/claude-got-skills/claude-capabilities/logs/freshness-launchd.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/liamj/Documents/development/claude-got-skills/claude-capabilities/logs/freshness-launchd-error.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>Nice</key>
+    <integer>10</integer>
+</dict>
+</plist>
