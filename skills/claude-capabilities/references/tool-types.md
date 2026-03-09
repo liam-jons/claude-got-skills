@@ -201,12 +201,24 @@ tools = [{"type": "web_search_20250305", "name": "web_search"}]
 
 ### Dynamic Filtering
 
-When combined with code execution, web search supports dynamic filtering —
-Claude writes code to filter and process search results before they reach the
-context window. This reduces token cost and improves result quality.
+Use the `_20260209` tool version to enable dynamic filtering — Claude writes
+code to filter and process search results before they reach the context window.
+
+```python
+# Dynamic filtering version (requires code execution tool)
+tools = [
+    {"type": "web_search_20260209", "name": "web_search"},
+    {"type": "code_execution_20250825", "name": "code_execution"}
+]
+# Previous version without dynamic filtering:
+# {"type": "web_search_20250305", "name": "web_search"}
+```
 
 Available on Opus 4.6 and Sonnet 4.6. Requires code execution tool to be
 enabled alongside web search.
+
+**ZDR note:** `web_search_20260209` is NOT ZDR-eligible by default. To use
+with ZDR, set `"allowed_callers": ["direct"]` to disable dynamic filtering.
 
 ### Pricing
 
@@ -231,10 +243,20 @@ as text for Claude to process.
 
 ### Dynamic Filtering
 
-Supports dynamic filtering with code execution — Claude writes code to
+Use `web_fetch_20260209` for dynamic filtering — Claude writes code to
 filter and transform fetched content before it reaches the context window.
+
+```python
+tools = [
+    {"type": "web_fetch_20260209", "name": "web_fetch"},
+    {"type": "code_execution_20250825", "name": "code_execution"}
+]
+# Previous version: {"type": "web_fetch_20250910", "name": "web_fetch"}
+```
+
 Available on Opus 4.6 and Sonnet 4.6. Code execution is free when used
-with web fetch.
+with web fetch. Same ZDR caveat as web search (`allowed_callers: ["direct"]`
+to disable for ZDR compliance).
 
 ---
 

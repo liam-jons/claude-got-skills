@@ -28,7 +28,8 @@ See `references/model-specifics.md` for full capability matrix, pricing, and mod
 Adaptive thinking (Opus 4.6 and Sonnet 4.6, `thinking: {type: "adaptive"}`), effort
 parameter (GA, all models, `"max"` Opus 4.6 only), 128K output tokens (Opus 4.6,
 streaming recommended). `budget_tokens` deprecated on Opus 4.6 — still works on legacy
-models. Fast mode (research preview, Opus 4.6, `speed` parameter, 2.5x faster output).
+models. Fast mode (beta, Opus 4.6, `speed: "fast"` + header `fast-mode-2026-02-01`,
+2.5x faster output, 6x pricing).
 See `references/api-features.md` for configuration details and code examples.
 
 ## Context & Memory (Post-Training)
@@ -36,7 +37,8 @@ See `references/api-features.md` for configuration details and code examples.
 1M context (beta, Opus 4.6 and Sonnet 4.6, header `context-1m-2025-08-07`). Memory tool
 (GA, cross-conversation persistence — client-side storage required). Compaction API and
 context editing for infinite conversations. Prompt caching (5-min and 1-hour) plus
-automatic caching (single `cache_control` field, system auto-manages cache points).
+automatic caching (`cache_control: {"type": "ephemeral"}` at request level, system
+auto-manages cache points — works alongside block-level caching).
 See `references/api-features.md` for headers, pricing, and code examples.
 
 ## Tools & Integration (Post-Training)
@@ -285,9 +287,30 @@ the above approaches.
 - **Beta headers removed**: Tool search, code execution, web fetch, web search,
   memory tool, programmatic tool calling — all now GA, no headers required.
 
+## Quick Reference (Key Parameters)
+
+These are the most frequently needed parameters — provided inline so they
+are available on all platforms (Claude Code, Claude.ai).
+
+**Adaptive thinking:** `thinking: {"type": "adaptive"}` (Opus 4.6, Sonnet 4.6)
+**Extended thinking:** `thinking: {"type": "enabled", "budget_tokens": N}` (Haiku 4.5, legacy)
+**Structured outputs:** `output_config: {"format": {"type": "json_schema", "schema": {...}}}`
+**Effort:** `effort: "low" | "medium" | "high" | "max"` (max = Opus 4.6 only)
+**Memory tool:** `tools: [{"type": "memory_20250818", "name": "memory"}]`
+**Web search:** `tools: [{"type": "web_search_20250305", "name": "web_search"}]`
+**Web search + filtering:** `tools: [{"type": "web_search_20260209", ...}]` (Opus/Sonnet 4.6)
+**Code execution:** `tools: [{"type": "code_execution_20250825", "name": "code_execution"}]`
+**1M context:** `betas: ["context-1m-2025-08-07"]` (tier 3+)
+**Fast mode:** `speed: "fast"`, `betas: ["fast-mode-2026-02-01"]` (Opus 4.6, 6x pricing)
+**Auto caching:** `cache_control: {"type": "ephemeral"}` (request level)
+**Files API:** `betas: ["files-api-2025-04-14"]`
+**MCP connector:** `betas: ["mcp-client-2025-11-20"]`
+
 ## Reference Files
 
-For detailed information with code examples, read the appropriate reference:
+For detailed information with code examples, read the appropriate reference.
+These are accessible in Claude Code; on Claude.ai, use the Quick Reference
+above for the most common parameters.
 
 - **`references/api-features.md`** — Read when implementing API calls,
   configuring beta features, or needing exact parameter names, headers, and

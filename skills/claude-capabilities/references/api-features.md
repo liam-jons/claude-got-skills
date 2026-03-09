@@ -348,39 +348,62 @@ for significant cost reduction on repeated requests.
 response = client.messages.create(
     model="claude-opus-4-6",
     max_tokens=1024,
-    cache_control={"type": "auto"},
+    cache_control={"type": "ephemeral"},
     messages=[{"role": "user", "content": "..."}]
 )
+# With 1-hour TTL (2x base input for writes):
+# cache_control={"type": "ephemeral", "ttl": "1h"}
 ```
 
 Add a single `cache_control` field at the request level and the system
 automatically caches the last cacheable block, moving the cache point forward
 as conversations grow. No manual breakpoint management required. Works
-alongside existing block-level cache control.
+alongside explicit block-level cache control (uses one of 4 breakpoint slots).
 
-**Availability:** Claude API and Azure AI Foundry (preview).
+**Edge cases:**
+- Last block has explicit `cache_control` with same TTL: no-op
+- Last block has explicit `cache_control` with different TTL: 400 error
+- All 4 breakpoint slots taken: 400 error
+- Last block not eligible: walks backward to find nearest eligible block
+
+**Minimum cacheable lengths** (vary by model):
+- Opus 4.6, Opus 4.5, Haiku 4.5: 4,096 tokens
+- Sonnet 4.6: 2,048 tokens
+- Sonnet 4.5: 1,024 tokens
+
+**Availability:** Claude API and Azure AI Foundry (preview). Not yet
+available on Bedrock or Vertex AI.
 
 ---
 
 ## Fast Mode
 
-**Status:** Research Preview | **Models:** Opus 4.6 | **Header:** None
+**Status:** Beta | **Models:** Opus 4.6 only | **Header:** `fast-mode-2026-02-01`
 **Access:** Waitlist-gated
 
-Up to 2.5x faster output token generation at premium pricing. Useful for
-latency-sensitive applications that need Opus-level quality.
+Up to 2.5x faster output token generation (OTPS, not TTFT). Same model
+weights — not a different model.
 
 ```python
-response = client.messages.create(
+response = client.beta.messages.create(
     model="claude-opus-4-6",
     max_tokens=4096,
     speed="fast",
-    messages=[{"role": "user", "content": "..."}]
+    messages=[{"role": "user", "content": "..."}],
+    betas=["fast-mode-2026-02-01"]
 )
+# response.usage includes speed: "fast" for verification
 ```
 
-**Note:** Fast mode is in research preview and not yet generally available.
-Premium pricing applies when `speed: "fast"` is set.
+**Pricing:** 6x standard Opus rates ($30/$150 per MTok input/output). Stacks
+with prompt caching and data residency multipliers. No additional long context
+surcharge for 1M context (unlike standard speed).
+
+**Constraints:**
+- Not available with Batch API or Priority Tier
+- Switching between fast/standard invalidates prompt cache
+- Dedicated rate limits (separate `anthropic-fast-*` headers)
+- Unsupported model + `speed: "fast"` returns an error
 
 ---
 
