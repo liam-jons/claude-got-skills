@@ -4,7 +4,7 @@ Agent SDK, subagents, skills system, hooks, MCP integration, and plugin
 architecture. Consult when building agents, configuring automation, or
 integrating external services.
 
-**Last updated:** 2026-03-07
+**Last updated:** 2026-03-09
 
 ## Table of Contents
 
@@ -38,7 +38,8 @@ npm install @anthropic-ai/claude-agent-sdk
 
 ### Core API — query()
 
-One-off autonomous task execution (creates new session each time):
+One-off autonomous task execution (creates new session each time). Supports
+hooks, custom tools, and custom transport.
 
 ```python
 import asyncio
@@ -74,6 +75,7 @@ client = ClaudeSDKClient(options={
     "model": "claude-sonnet-4-5-20250929",
     "permission_mode": "acceptEdits",
 })
+# Optional: pass transport= for custom transport
 
 # First query
 async for event in client.query("Set up the project structure"):
@@ -82,6 +84,33 @@ async for event in client.query("Set up the project structure"):
 # Follow-up (same session context)
 async for event in client.query("Now add tests"):
     handle(event)
+```
+
+### Custom Transport
+
+Supply a custom `Transport` implementation to control how requests are sent:
+
+```python
+from claude_agent_sdk import Transport, ClaudeSDKClient, query
+
+class MyTransport(Transport):
+    async def send(self, request):
+        # Custom routing, logging, proxying, etc.
+        ...
+
+client = ClaudeSDKClient(options={...}, transport=MyTransport())
+# Also works with query():
+async for event in query(prompt="...", options={...}, transport=MyTransport()):
+    ...
+```
+
+### Session Management
+
+```python
+from claude_agent_sdk import list_sessions, get_session_messages
+
+sessions = await list_sessions()
+messages = await get_session_messages(session_id="sess_abc123")
 ```
 
 ### Key Options (ClaudeAgentOptions)
@@ -93,10 +122,12 @@ async for event in client.query("Now add tests"):
 | `max_turns` | int | Max agentic turns before stopping |
 | `max_budget_usd` | float | Spending limit per query |
 | `permission_mode` | string | default/acceptEdits/plan/bypassPermissions |
-| `allowed_tools` | list | Tools auto-approved without prompting |
+| `allowed_tools` | list | Tools auto-approved without prompting (does NOT restrict to only these tools; unlisted tools fall through to `permission_mode`) |
 | `disallowed_tools` | list | Tools blocked entirely |
+| `setting_sources` | list | Additional settings file paths to load |
+| `thinking` | ThinkingConfig | Extended thinking configuration |
 | `hooks` | dict | Lifecycle hooks configuration |
-| `agents` | dict | Custom subagent definitions |
+| `agents` | dict | Programmatic subagent definitions |
 | `plugins` | list | Plugin paths to load |
 | `cwd` | string | Working directory |
 | `system_prompt` | string | Override system prompt |
@@ -121,7 +152,7 @@ options = {"api_provider": "msft-foundry", "foundry_host": "..."}
 ### Built-in Tools
 
 Agent SDK provides: Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch,
-AskUserQuestion, Task (subagent launcher), TodoWrite.
+AskUserQuestion, Agent (subagent launcher, formerly Task), TodoWrite.
 
 ---
 
@@ -145,6 +176,21 @@ server = create_sdk_mcp_server([search_database])
 Custom tools are exposed as MCP tools. The `@tool` decorator automatically
 generates the input schema from type annotations and docstring.
 
+### Tool Annotations
+
+Use the `annotations` parameter on `@tool` for MCP tool annotations:
+
+```python
+@tool(annotations={
+    "readOnlyHint": True,
+    "destructiveHint": False,
+    "openWorldHint": False,
+})
+def safe_query(query: str) -> str:
+    """Run a read-only database query."""
+    return db.read(query)
+```
+
 ---
 
 ## Subagents
@@ -152,7 +198,7 @@ generates the input schema from type annotations and docstring.
 **Status:** GA | **Context:** Claude Code / Agent SDK
 
 Isolated AI agents with their own context windows, tool access, and system
-prompts. Launch via the Task tool.
+prompts. Launch via the Agent tool (formerly Task tool).
 
 ### Built-in Subagents
 
@@ -218,13 +264,14 @@ CLI flag > project (.claude/agents/) > user (~/.claude/agents/) > plugin agents
 
 **Status:** GA | **Context:** Claude Code / Agent SDK
 
-Lifecycle automation at key events. Three hook types:
+Lifecycle automation at key events. Four hook types:
 
 ### Hook Types
 
 | Type | Mechanism | Use Case |
 |------|-----------|----------|
 | `command` | Shell script execution | File validation, logging, notifications |
+| `http` | POST event data to HTTP endpoint | Remote integrations, webhooks |
 | `prompt` | LLM evaluation | Content review, policy checks |
 | `agent` | Tool-enabled verification | Complex validation requiring tool access |
 
@@ -236,10 +283,15 @@ Lifecycle automation at key events. Three hook types:
 | `PreToolUse` | Before tool execution | Tool name regex |
 | `PostToolUse` | After tool execution | Tool name regex |
 | `Stop` | Agent stops | — |
-| `SubagentStop` | Subagent completes | — |
+| `SubagentStop` | Subagent completes | Agent type name |
 | `UserPromptSubmit` | User sends message | — |
 | `PreCompact` | Before context compaction | — |
 | `Notification` | Notification event | Notification type |
+| `ConfigChange` | Settings/skills change externally | — |
+| `TeammateIdle` | Teammate becomes idle | — |
+| `TaskCompleted` | Task finishes | — |
+| `WorktreeCreate` | Worktree created | — |
+| `WorktreeRemove` | Worktree removed | — |
 
 ### Hook Configuration
 
@@ -401,9 +453,11 @@ Located at `.claude-plugin/plugin.json`.
 |-----------|-----------|-----------|
 | Skills | `skills/` | Auto (SKILL.md) |
 | Agents | `agents/` | Auto (.md files) |
-| Commands | `commands/` | Auto (.md files) |
 | Hooks | `hooks/hooks.json` or inline | Configured |
+| Settings | `settings.json` | Auto |
 | MCP servers | `.mcp.json` or inline | Configured |
+
+Skills are invoked as `/plugin-name:skill-name` (e.g., `/my-plugin:deploy`).
 
 ### Special Variables
 
@@ -418,6 +472,10 @@ claude plugin uninstall <name>
 claude plugin enable/disable <name>
 claude plugin update <name>
 ```
+
+### Marketplace
+
+Official marketplace submission forms available for publishing plugins.
 
 ---
 

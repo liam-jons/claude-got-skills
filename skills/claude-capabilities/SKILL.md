@@ -81,8 +81,9 @@ See `references/tool-types.md` for all tool configurations and compatibility mat
 
 ## Output & Structure
 
-**Structured outputs** (GA): guaranteed JSON via `output_config.format` or `strict: true`
-on tools. SDK helpers: `client.messages.parse()`, `zodOutputFormat()`. Note: `output_format`
+**Structured outputs** (GA, including Bedrock): guaranteed JSON via `output_config.format`
+or `strict: true` on tools. SDK helpers: `client.messages.parse()`, `zodOutputFormat()`.
+Schema limits: max 20 strict tools, 24 optional params per request. Note: `output_format`
 is deprecated — use `output_config.format`.
 
 **Files API** (beta, `files-api-2025-04-14`): persistent file storage, 500MB/file, 100GB/org.
@@ -108,9 +109,11 @@ Claude is available across multiple platforms. Each has different extension supp
 Auto-invocation triggers from natural language (no slash commands). Use Projects for
 persistent context. MCP Apps supported for interactive UIs.
 
-**Claude Code** (CLI, VS Code, JetBrains): Full extension system — skills, plugins,
-hooks, subagents, agent teams, MCP, CLAUDE.md. Background tasks (`Ctrl+B`), `/loop`
-scheduling, cron tools. See `references/claude-code-specifics.md` for details.
+**Claude Code** (CLI, VS Code, JetBrains): Full extension system — skills (including
+5 bundled: `/simplify`, `/batch`, `/debug`, `/loop`, `/claude-api`), plugins, hooks
+(shell + HTTP), subagents, agent teams, MCP, CLAUDE.md + `.claude/rules/`. Background
+tasks (`Ctrl+B`), `/loop` scheduling, cron tools.
+See `references/claude-code-specifics.md` for details.
 
 **CoWork**: Browser automation environment. Skills auto-invoke or via plugin slash
 commands. MCP available via plugins. No hooks, subagents, or teams.
@@ -121,10 +124,12 @@ See `references/model-specifics.md` for platform availability matrix.
 
 ## Agent Capabilities
 
-**Agent SDK** (Python, TypeScript): `query()` for one-off tasks, `ClaudeSDKClient` for
-persistent conversations. **Subagents**: isolated context windows. **Hooks**: lifecycle
-events (PreToolUse, PostToolUse, Stop, etc.). **Plugins**: bundle and distribute all
-extensions. **MCP Apps** (beta): interactive HTML UIs in MCP hosts.
+**Agent SDK** (Python, TypeScript): `query()` for one-off tasks (now supports hooks
+and custom tools), `ClaudeSDKClient` for persistent conversations, custom `Transport`
+for remote connections. **Subagents**: isolated context windows via `Agent` tool
+(renamed from `Task` in v2.1.63). **Hooks**: lifecycle events including shell and
+HTTP hooks (`type: "http"`). **Plugins**: bundle skills, hooks, MCP, and settings.
+**MCP Apps** (beta): interactive HTML UIs in MCP hosts.
 See `references/agent-capabilities.md` for SDK API, hook config, and plugin structure.
 
 ## Choosing the Right Extension Pattern
@@ -133,7 +138,7 @@ Match the extension to the task. Available extensions vary by platform (see tabl
 
 | Need | Use | Where Available |
 |------|-----|-----------------|
-| "Always do X" rules | **CLAUDE.md** | Claude Code |
+| "Always do X" rules | **CLAUDE.md** (~200 lines) | Claude Code |
 | Persistent project context | **Projects** | Claude.ai, Desktop |
 | Reusable knowledge/workflow | **Skill** | All platforms |
 | External service connection | **MCP** | All platforms (varies) |
@@ -144,8 +149,9 @@ Match the extension to the task. Available extensions vary by platform (see tabl
 | Bundle + distribute | **Plugin** | Claude Code |
 
 **Key distinctions:**
-- **Skill vs CLAUDE.md vs Projects**: CLAUDE.md = "always know this" (Claude Code).
-  Projects = persistent context (Claude.ai/Desktop). Skill = "know this when relevant" (all).
+- **Skill vs CLAUDE.md vs Projects**: CLAUDE.md = "always know this" (~200 lines max,
+  use `.claude/rules/` for overflow). Projects = persistent context (Claude.ai/Desktop).
+  Skill = "know this when relevant" (all platforms).
 - **Skill vs Subagent**: Skills are *content*. Subagents are isolated *workers*.
 - **MCP vs Skill**: MCP gives the *ability* to act. A skill teaches *how* to act well.
 
@@ -222,7 +228,7 @@ Common parameters inline for all platforms. For detailed examples, see reference
 **Memory tool:** `tools: [{"type": "memory_20250818", "name": "memory"}]`
 **Web search:** `tools: [{"type": "web_search_20250305", "name": "web_search"}]`
 **Web search + filtering:** `tools: [{"type": "web_search_20260209", ...}]` (Opus/Sonnet 4.6)
-**Code execution:** `tools: [{"type": "code_execution_20250825", "name": "code_execution"}]`
+**Code execution:** `tools: [{"type": "code_execution_20260120", "name": "code_execution"}]`
 **Image input:** `{"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": "..."}}`
 **PDF input:** `{"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": "..."}}`
 **1M context:** `betas: ["context-1m-2025-08-07"]` (tier 3+)
@@ -249,4 +255,5 @@ On Claude.ai/Desktop, use the Quick Reference above for common parameters.
   migration guides, platform availability matrix.
 
 - **`references/claude-code-specifics.md`** — Background tasks, /loop scheduling,
-  agent teams, Chrome browser, CLI reference, IDE extensions, skills system, plugins.
+  agent teams, browser integration, CLI reference, IDE extensions, skills, plugins,
+  sandbox settings, MCP integration.

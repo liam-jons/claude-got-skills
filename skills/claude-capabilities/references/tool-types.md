@@ -4,7 +4,7 @@ All built-in tool types with configuration, parameters, and usage patterns.
 Consult when configuring tools, understanding tool-specific limitations, or
 choosing the right tool for a task.
 
-**Last updated:** 2026-03-07
+**Last updated:** 2026-03-09
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ choosing the right tool for a task.
 - [Memory Tool](#memory-tool)
 - [Bash Tool](#bash-tool)
 - [Text Editor](#text-editor)
-- [Tool Use Examples](#tool-use-examples-beta)
+- [Tool Use Examples](#tool-use-examples-ga)
 - [Tool Runner](#tool-runner)
 - [Tool Compatibility Matrix](#tool-compatibility-matrix)
 
@@ -34,12 +34,12 @@ Desktop automation via screenshots, mouse, and keyboard control.
 
 | Tool Type | Models | Features |
 |-----------|--------|----------|
-| `computer_20251124` | Opus 4.6, Opus 4.5 | All actions + zoom |
+| `computer_20251124` | Opus 4.6, Sonnet 4.6, Opus 4.5 | All actions + zoom |
 | `computer_20250124` | Sonnet 4.5, Haiku 4.5, Opus 4.1, Sonnet 4, Opus 4, Sonnet 3.7 | Enhanced actions |
 
 ### Beta Headers
 
-- Opus 4.6, Opus 4.5: `computer-use-2025-11-24`
+- Opus 4.6, Sonnet 4.6, Opus 4.5: `computer-use-2025-11-24`
 - All others: `computer-use-2025-01-24`
 
 ### Configuration
@@ -103,17 +103,21 @@ def get_scale_factor(width, height):
 - Implement human confirmation for sensitive actions
 - Automatic prompt injection classifiers available
 
+### Benchmarks
+
+- WebArena: state-of-the-art performance on real-world web browsing tasks
+
 ---
 
 ## Code Execution
 
-**Status:** GA | **Header:** None required (formerly `code-execution-2025-08-25`)
+**Status:** GA | **Header:** None required
 
 Sandboxed Python environment for computation, data analysis, and file
 generation.
 
 ```python
-tools = [{"type": "code_execution_20250825", "name": "code_execution"}]
+tools = [{"type": "code_execution_20260120", "name": "code_execution"}]
 ```
 
 ### Container Environment
@@ -142,8 +146,9 @@ Enable both code execution and skills headers for document generation.
 
 ## Programmatic Tool Calling
 
-**Status:** GA | **Header:** None required (formerly `advanced-tool-use-2025-11-20`)
+**Status:** GA | **Header:** None required
 **Models:** Opus 4.6, Sonnet 4.6, Sonnet 4.5, Opus 4.5
+**ZDR:** Not eligible
 
 Claude writes Python code that calls tools programmatically within the code
 execution container, without model round-trips.
@@ -158,14 +163,14 @@ tools = [
         "name": "search_database",
         "description": "Search the database",
         "input_schema": {"type": "object", "properties": {...}},
-        "allowed_callers": ["direct", "code_execution_20250825"]
+        "allowed_callers": ["direct", "code_execution_20260120"]
     },
-    {"type": "code_execution_20250825", "name": "code_execution"}
+    {"type": "code_execution_20260120", "name": "code_execution"}
 ]
 ```
 
 - `"direct"` — normal model-driven tool calls
-- `"code_execution_20250825"` — callable from code execution container
+- `"code_execution_20260120"` — callable from code execution container
 
 ### Key Behaviour
 
@@ -177,7 +182,7 @@ tools = [
 ### Incompatibilities
 
 - Cannot use with `strict: true` (structured outputs via tool schemas)
-- Incompatible with web search, web fetch, MCP connector tools
+- Incompatible with MCP connector tools
 - Tool results from programmatic calls only support `tool_result` format
 
 ---
@@ -208,7 +213,7 @@ code to filter and process search results before they reach the context window.
 # Dynamic filtering version (requires code execution tool)
 tools = [
     {"type": "web_search_20260209", "name": "web_search"},
-    {"type": "code_execution_20250825", "name": "code_execution"}
+    {"type": "code_execution_20260120", "name": "code_execution"}
 ]
 # Previous version without dynamic filtering:
 # {"type": "web_search_20250305", "name": "web_search"}
@@ -249,7 +254,7 @@ filter and transform fetched content before it reaches the context window.
 ```python
 tools = [
     {"type": "web_fetch_20260209", "name": "web_fetch"},
-    {"type": "code_execution_20250825", "name": "code_execution"}
+    {"type": "code_execution_20260120", "name": "code_execution"}
 ]
 # Previous version: {"type": "web_fetch_20250910", "name": "web_fetch"}
 ```
@@ -394,7 +399,7 @@ Available as a built-in tool in Claude Code and Agent SDK contexts.
 
 ## Tool Use Examples (GA)
 
-No header required (formerly `advanced-tool-use-2025-11-20`).
+No header required.
 
 Provide examples of expected tool inputs to improve tool call quality:
 
@@ -409,6 +414,15 @@ tools = [{
     ]
 }]
 ```
+
+### Tool Design Best Practices
+
+- **Consolidate related operations** — combine related actions into a single
+  tool rather than spreading across many small tools
+- **Use meaningful namespacing** — name tools with clear prefixes/grouping
+  that reflect their domain (e.g., `db_query`, `db_insert`)
+- **Return only high-signal information** — tool results should contain the
+  most relevant data, not raw dumps or verbose output
 
 ---
 
@@ -440,8 +454,8 @@ Python, TypeScript, and Ruby SDKs.
 |------|-------------------|-----------|---------|---------------------|
 | Computer use | No | No | No | No |
 | Code execution | No | No | No | Base for it |
-| Web search | Yes | Yes | No | No |
-| Web fetch | Yes | No | No | No |
+| Web search | Yes | Yes | No | Yes |
+| Web fetch | Yes | No | No | Yes |
 | MCP connector | Yes | No | No | No |
 | Memory | Yes | No | No | No |
 | Custom tools | Yes (strict) | Yes | No | Yes (with allowed_callers) |

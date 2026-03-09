@@ -1,16 +1,16 @@
 # Claude Code Specifics Reference
 
-Claude Code-specific features: agent teams, Chrome browser integration, CLI
+Claude Code-specific features: agent teams, browser integration, CLI
 reference, IDE extensions, skills system, and plugin development. These capabilities
 are distinct from API-level features and only apply in Claude Code contexts.
 
-**Last updated:** 2026-03-07
+**Last updated:** 2026-03-09
 
 ## Table of Contents
 
 - [Background Tasks & Scheduling](#background-tasks--scheduling)
 - [Agent Teams](#agent-teams)
-- [Chrome Browser Integration](#chrome-browser-integration)
+- [Browser Integration](#browser-integration)
 - [CLI Reference](#cli-reference)
 - [IDE Extensions](#ide-extensions)
 - [Skills System](#skills-system)
@@ -88,7 +88,8 @@ tools:
 ```
 
 The `background: true` field in agent frontmatter makes the agent
-always launch as a background task.
+always launch as a background task. MCP tools are now allowed in
+background subagents (previously restricted).
 
 ### Environment Control
 
@@ -101,8 +102,8 @@ functionality (set in settings.json or environment).
 
 **Status:** Experimental | **Enable:** `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`
 
-Coordinate multiple Claude Code instances working together. One session leads,
-teammates work independently with their own context windows.
+Coordinate multiple Claude Code instances working together. 3-5 teammates
+recommended. Each works independently with their own context windows.
 
 ### When to Use
 
@@ -140,7 +141,7 @@ Enable in settings.json:
 
 ### Display Modes
 
-- **In-process** (default): all teammates in main terminal. Shift+Up/Down to
+- **In-process** (default): all teammates in main terminal. Shift+Down to
   select and message teammates directly.
 - **Split panes**: each teammate gets own pane (requires tmux or iTerm2).
 
@@ -155,16 +156,16 @@ Set via `teammateMode` in settings.json: `"auto"`, `"in-process"`, or `"tmux"`.
 
 ---
 
-## Chrome Browser Integration
+## Browser Integration
 
 **Status:** Beta | **Enable:** `claude --chrome` or `/chrome` in session
 
-Connect Claude Code to Chrome for browser automation via the Claude in Chrome
+Connect Claude Code to a browser for automation via the Claude in Chrome
 browser extension.
 
 ### Prerequisites
 
-- Google Chrome browser
+- Google Chrome or Microsoft Edge browser
 - Claude in Chrome extension v1.0.36+
 - Claude Code v2.0.73+
 - Direct Anthropic plan (Pro, Max, Team, or Enterprise)
@@ -196,7 +197,7 @@ claude --chrome
 - Shares your browser login state
 - Actions run in visible Chrome window (real-time)
 - Pauses on login pages or CAPTCHAs for manual handling
-- Currently works with Google Chrome only (not Brave, Arc, etc.)
+- Works with Google Chrome and Microsoft Edge (not Brave, Arc, etc.)
 - WSL not supported
 
 ### Context Impact
@@ -220,6 +221,11 @@ Use `--chrome` flag per-session to avoid this if not always needed.
 | `claude -r "session" "query"` | Resume session by ID or name |
 | `claude update` | Update to latest version |
 | `claude mcp` | Configure MCP servers |
+| `claude agents` | List all configured subagents |
+| `claude auth login` | Log in (supports `--email`, `--sso`) |
+| `claude auth logout` | Log out |
+| `claude auth status` | Show authentication status |
+| `claude remote-control` | Remote control mode |
 
 ### Key Flags
 
@@ -242,6 +248,7 @@ Use `--chrome` flag per-session to avoid this if not always needed.
 | `--system-prompt` | Replace entire system prompt |
 | `--output-format` | Output format: text, json, stream-json (print mode) |
 | `--fallback-model` | Fallback model when primary is overloaded |
+| `--worktree` / `-w` | Run in isolated git worktree |
 | `--add-dir` | Add additional working directories |
 | `--allowedTools` | Tools auto-approved without permission prompts |
 | `--disallowedTools` | Tools blocked entirely |
@@ -263,7 +270,15 @@ claude --agents '{
 ```
 
 Subagent definition fields: `description` (required), `prompt` (required),
-`tools`, `disallowedTools`, `model`, `skills`, `mcpServers`, `maxTurns`.
+`tools`, `disallowedTools`, `model`, `skills`, `mcpServers`, `maxTurns`,
+`background` (always background), `isolation` (`worktree` for isolated git worktree).
+
+Use `Agent(worker, researcher)` allowlist syntax with `--agent` mode to restrict
+which subagents can be spawned.
+
+**Tool rename:** `Task` tool renamed to `Agent` (e.g., `Agent(agent_type)`,
+`Agent(Explore)`). Legacy `Task(...)` syntax still works as an alias (since v2.1.63).
+`SubagentStop` supports matchers by agent type name.
 
 ### Structured Output (Print Mode)
 
@@ -356,6 +371,22 @@ context: inherit       # inherit (default) or fork (isolated subagent)
 | Project | `.claude/skills/<name>/SKILL.md` | This project |
 | Plugin | `<plugin>/skills/<name>/SKILL.md` | Where plugin installed |
 
+### Bundled Skills
+
+5 built-in skills available out of the box:
+
+| Skill | Purpose |
+|-------|---------|
+| `/simplify` | Simplify code or explanations |
+| `/batch` | Run operations across multiple files |
+| `/debug` | Debug issues systematically |
+| `/loop` | Run recurring prompts on an interval |
+| `/claude-api` | Help with Anthropic API usage |
+
+### Environment
+
+`CLAUDE_SKILL_DIR` — override default skill directory location.
+
 ### Legacy Commands
 
 `.claude/commands/*.md` files still work — they create slash commands identical to
@@ -369,8 +400,9 @@ Claude Code's extension system is layered:
 
 ```
 Always-on context:
-  └── CLAUDE.md — persistent context loaded every session
+  └── CLAUDE.md — persistent context loaded every session (~200 lines max)
       (project conventions, coding rules, build commands)
+      └── .claude/rules/ — path-specific scoping for CLAUDE.md rules
 
 On-demand capabilities:
   ├── Skills — reusable knowledge and workflows
@@ -384,10 +416,15 @@ External connections:
 
 Background automation:
   └── Hooks — deterministic scripts on lifecycle events
+      ├── Shell hooks (default)
+      └── HTTP hooks (type: "http") — POST event data to HTTP endpoints
 
 Packaging:
-  └── Plugins — bundle skills, agents, hooks, MCP, commands
-      └── Marketplaces — distribute plugins to community
+  └── Plugins — bundle skills, agents, hooks, MCP, settings
+      ├── skills/ directory (renamed from commands/)
+      ├── settings.json for default plugin configuration
+      ├── Invoke via /plugin-name:skill-name
+      └── Official marketplace submission forms
 ```
 
 ### Feature Selection Guide
@@ -402,6 +439,45 @@ Packaging:
 | External service access | MCP server |
 | Automatic validation/logging | Hook |
 | Share across projects | Plugin |
+
+### Hook Events
+
+| Event | Fires when |
+|-------|------------|
+| `PreToolUse` | Before a tool executes |
+| `PostToolUse` | After a tool executes |
+| `Notification` | Claude sends a notification |
+| `Stop` | Claude finishes responding |
+| `ConfigChange` | Settings or skills change externally |
+| `TeammateIdle` | A teammate becomes idle |
+| `TaskCompleted` | A background task finishes |
+| `WorktreeCreate` | A git worktree is created |
+| `WorktreeRemove` | A git worktree is removed |
+
+Hooks can be shell scripts (default) or HTTP endpoints (`type: "http"`).
+
+### MCP Integration Notes
+
+- `--callback-port` flag for fixed OAuth callback ports
+- `authServerMetadataUrl` override for non-standard OAuth servers
+- Claude.ai MCP servers are auto-available when logged in with a Claude.ai
+  account. Disable with `ENABLE_CLAUDEAI_MCP_SERVERS=false`.
+
+### Sandbox Settings
+
+Control filesystem access for sandboxed tools:
+
+| Setting | Purpose |
+|---------|---------|
+| `sandbox.filesystem.allowWrite` | Paths where writes are allowed |
+| `sandbox.filesystem.denyWrite` | Paths where writes are blocked |
+| `sandbox.filesystem.denyRead` | Paths where reads are blocked |
+
+Path prefix resolution:
+- `//` — absolute path
+- `~/` — relative to home directory
+- `/` — relative to settings file location
+- `./` — relative to runtime working directory
 
 ### Skills vs Subagents
 

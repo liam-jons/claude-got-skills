@@ -4,7 +4,7 @@ Detailed API feature documentation with code examples, beta headers, and
 platform availability. Consult when implementing API calls or configuring
 features.
 
-**Last updated:** 2026-03-07
+**Last updated:** 2026-03-09
 
 ## Table of Contents
 
@@ -131,6 +131,11 @@ response = client.beta.messages.create(
 **Pricing:** Tokens beyond 200K are premium — 2x input price, 1.5x output
 price. Tokens within the 200K window are standard price.
 
+**Context rot:** Accuracy degrades as token count grows — particularly for
+retrieval tasks in the middle of long contexts. Place critical information at
+the start or end, use prompt caching and compaction to manage context size, and
+prefer structured formats to help Claude locate key details.
+
 **Platform availability:** Claude API (direct). Check Bedrock/Vertex for
 current support.
 
@@ -167,7 +172,7 @@ with memory tool to preserve critical information before clearing.
 ## Structured Outputs
 
 **Status:** GA | **Models:** All current | **Header:** None
-**Note:** Beta on Bedrock and Foundry
+**Note:** GA on Bedrock; Beta on Foundry | **ZDR eligible**
 
 Two complementary approaches:
 
@@ -226,6 +231,13 @@ Supported: objects, arrays, enums, `$ref`, string formats.
 Unsupported: recursion, numerical constraints (min/max), regex backreferences.
 Grammar caching: 24-hour cache, invalidated on schema changes.
 
+**Complexity limits:** Max 20 strict tools per request, 24 optional parameters
+per tool, 16 union types per schema, 180-second compilation timeout.
+
+**Property ordering:** In responses, required properties appear first, then
+optional properties in schema-definition order. Design schemas accordingly for
+predictable output structure.
+
 ### Incompatibilities
 
 - Cannot combine structured outputs with citations
@@ -277,11 +289,18 @@ content = client.beta.files.download(file.id)
 
 ## Memory Tool
 
-**Status:** GA | **Header:** None required (formerly `context-management-2025-06-27`)
-**Models:** All current models
+**Status:** GA | **Header:** None required (formerly beta with `context-management-2025-06-27`)
+**Models:** All current models (including Opus 4.6, Sonnet 4.6) | **ZDR eligible**
 
 ```python
 tools = [{"type": "memory_20250818", "name": "memory"}]
+
+response = client.messages.create(
+    model="claude-opus-4-6",
+    max_tokens=4096,
+    tools=tools,
+    messages=[{"role": "user", "content": "Remember that my preferred language is Python"}]
+)
 ```
 
 **Commands:**
@@ -294,6 +313,16 @@ tools = [{"type": "memory_20250818", "name": "memory"}]
 
 **Client responsibility:** persist memory store between conversations. The API
 provides the tool interface; storage is client-side.
+
+**Using with compaction:** When using the compaction API alongside memory,
+instruct Claude to save critical context to memory before compaction triggers.
+This preserves important details that would otherwise be summarised away.
+
+**Multi-session software development pattern:** Use memory to maintain project
+context (architecture decisions, file structure, coding conventions) across
+sessions. At the start of each session, Claude reads memory to re-orient; at
+the end, it writes updated state. This enables continuous multi-session
+development without losing context between conversations.
 
 **Security:** validate all paths start with `/memories`, reject path traversal
 patterns (`../`), use `pathlib.Path.resolve()` for canonical paths.
@@ -341,7 +370,7 @@ containing source, title, cited_text, and index references.
 
 **Durations:** 5-minute (all platforms), 1-hour (API, Azure).
 **Cost savings:** cached reads cost 10% of base input price.
-**Minimum cacheable length:** 1,024 tokens (Haiku), 2,048 tokens (others).
+**Minimum cacheable length:** varies by model (see below).
 
 Mark system prompts, tool definitions, and large documents with cache_control
 for significant cost reduction on repeated requests.
@@ -612,7 +641,7 @@ than Sonnet/Haiku. Check your current tier at console.anthropic.com.
 
 | Feature | Claude API | Bedrock | Vertex AI | Azure/Foundry |
 |---------|-----------|---------|-----------|---------------|
-| Structured outputs | GA | Beta | Beta | Beta |
+| Structured outputs | GA | GA | Beta | Beta |
 | Extended thinking | GA | GA | GA | GA |
 | Prompt caching | GA | GA | GA | GA |
 | Batch processing | GA | GA | GA | Varies |

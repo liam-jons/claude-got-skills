@@ -4,7 +4,7 @@ Per-model capability matrix, pricing, limits, and migration guidance.
 Consult when choosing between models, planning migrations, or understanding
 model-specific behaviour.
 
-**Last updated:** 2026-03-07
+**Last updated:** 2026-03-09
 
 ## Table of Contents
 
@@ -40,6 +40,7 @@ model-specific behaviour.
 | Capability | Opus 4.6 | Sonnet 4.6 | Haiku 4.5 | Sonnet 4.5 (legacy) | Opus 4.5 (legacy) |
 |------------|----------|------------|-----------|---------------------|-------------------|
 | Context window | 200K (1M beta) | 200K (1M beta) | 200K | 200K (1M beta) | 200K (1M beta) |
+| Context awareness | No | Yes | Yes | Yes | No |
 | Max output tokens | 128K | 64K | 64K | 64K | 32K |
 | Extended thinking | Yes (adaptive) | Yes (adaptive) | Yes (budget) | Yes (budget) | Yes (budget) |
 | Interleaved thinking | Yes (auto) | Yes (auto) | No | Yes (auto) | No |
@@ -47,7 +48,7 @@ model-specific behaviour.
 | Effort: max | Yes | No | No | No | No |
 | Effort: low/med/high | Yes | Yes | Yes | Yes | Yes |
 | Structured outputs | Yes | Yes | Yes | Yes | Yes |
-| Computer use | Yes (v20251124) | Yes | Yes (v20250124) | Yes (v20250124) | Yes (v20251124) |
+| Computer use | Yes (v20251124) | Yes (v20251124) | Yes (v20250124) | Yes (v20250124) | Yes (v20251124) |
 | Tool search (GA) | Yes | Yes | No | Yes | Yes |
 | Code execution (GA) | Yes | Yes | Yes | Yes | Yes |
 | Programmatic tool calling (GA) | Yes | Yes | No | Yes | Yes |
@@ -56,7 +57,7 @@ model-specific behaviour.
 | Dynamic filtering | Yes | Yes | No | No | No |
 | Batch processing | Yes | Yes | Yes | Yes | Yes |
 | Prompt caching | Yes | Yes | Yes | Yes | Yes |
-| Data residency | Yes | No | No | No | No |
+| Data residency (ZDR) | Yes | No | No | No | No |
 
 ---
 
@@ -117,7 +118,7 @@ a model can think extensively without accumulating context debt.
 
 Effective context: `context_window = (input_tokens - previous_thinking_tokens) + current_turn_tokens`
 
-### Context Awareness (Sonnet 4.5, Haiku 4.5 only)
+### Context Awareness (Sonnet 4.6, Sonnet 4.5, Haiku 4.5)
 
 These models receive `<budget:token_budget>` in the system prompt and
 `<system_warning>Token usage: X/Y; Z remaining</system_warning>` after tool
@@ -156,8 +157,8 @@ See `references/api-features.md` for code examples and migration guidance.
 
 ## Computer Use Versions
 
-Opus 4.6 and Opus 4.5 use `computer_20251124` (includes zoom action). All other
-models use `computer_20250124`. See `references/tool-types.md` for full configuration,
+Opus 4.6, Sonnet 4.6, and Opus 4.5 use `computer_20251124` (includes zoom action).
+Haiku 4.5 and Sonnet 4.5 use `computer_20250124`. See `references/tool-types.md` for full configuration,
 available actions, coordinate scaling, and security requirements.
 
 ---
@@ -177,10 +178,20 @@ available actions, coordinate scaling, and security requirements.
 
 ### GA Features (No Header Required)
 
-Structured outputs, effort parameter, extended thinking, prompt caching,
-batch processing, web search, web fetch, code execution, tool search,
-memory tool, programmatic tool calling, tool use examples, citations,
-token counting, fine-grained tool streaming.
+Structured outputs (GA on direct API and Amazon Bedrock), effort parameter,
+extended thinking, prompt caching, batch processing, web search, web fetch,
+code execution, tool search, memory tool, programmatic tool calling,
+tool use examples (`input_examples`), citations, token counting,
+fine-grained tool streaming.
+
+**Programmatic tool calling:** All supported models use tool version
+`code_execution_20260120`. Web search and web fetch are no longer restricted
+to specific models — available on all models that support programmatic
+tool calling.
+
+**Structured outputs schema limits:** Subject to schema complexity limits
+(max nesting depth, max properties, max enum values). See API docs for
+current thresholds.
 
 ---
 
@@ -238,8 +249,8 @@ tool parameter extraction. Well-formed JSON parsers handle all valid escaping.
 2. Remove any prefill logic (will error)
 3. Update `output_format` to `output_config.format`
 4. Remove `interleaved-thinking-2025-05-14` header
-5. Update computer use tool type from `computer_20250124` to
-   `computer_20251124` and header to `computer-use-2025-11-24`
+5. Update computer use tool type to `computer_20251124` and header to
+   `computer-use-2025-11-24` (if migrating from Opus 4.5 `computer_20250124`)
 6. Test JSON parsing for tool parameters (quoting changes)
 7. Increase `max_tokens` ceiling — now supports up to 128K
 
@@ -248,9 +259,11 @@ tool parameter extraction. Well-formed JSON parsers handle all valid escaping.
 1. Replace `thinking: {type: "enabled", budget_tokens: N}` with
    `thinking: {type: "adaptive"}`
 2. Programmatic tool calling now GA — no beta header required
-3. Context awareness system warnings not present on Sonnet 4.6
+3. Context awareness still present on Sonnet 4.6 (unlike Opus 4.6)
 4. Same pricing as Sonnet 4.5 ($3/$15)
 5. Dynamic filtering now available for web search/fetch
+6. Computer use upgraded to `computer_20251124` (includes zoom action)
+7. Effort parameter supported (first Sonnet to support `effort`)
 
 ### From Sonnet 4.5 to Opus 4.6
 
