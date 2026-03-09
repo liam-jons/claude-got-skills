@@ -5,7 +5,7 @@
     {
       "name": "claude-capabilities",
       "path": "skills/claude-capabilities",
-      "description": "Accurate post-training knowledge about Claude capabilities, API features, extension patterns, and model specifics."
+      "description": "Comprehensive Claude capabilities reference — current models, vision, PDFs, API features, extension patterns, platform availability (Claude.ai, Desktop, Code, CoWork), and breaking changes."
     }
   ]
 }

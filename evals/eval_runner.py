@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Capabilities Skill Baseline Evaluation (v1.3.0)
+Capabilities Skill Baseline Evaluation (v2.0.0)
 ===================================================
 Runs test prompts in two conditions:
   - Control: No skill context (pure training knowledge)
@@ -840,7 +840,7 @@ def main():
     conditions = ["control", "treatment"]
 
     print(f"\n{'='*60}")
-    print(f"  CAPABILITIES SKILL EVALUATION (v1.3.0)")
+    print(f"  CAPABILITIES SKILL EVALUATION (v2.0.0)")
     print(f"{'='*60}")
     print(f"  Model: {CONFIG['model']}")
     print(f"  Runs per test: {CONFIG['runs']}")
@@ -925,7 +925,7 @@ def main():
             "model": CONFIG["model"],
             "judge_model": CONFIG["judge_model"] if CONFIG["use_judge"] else None,
             "timestamp": ts,
-            "skill_version": "1.3.0",
+            "skill_version": "2.0.0",
             "conditions": conditions,
             "runs": CONFIG["runs"],
             "use_judge": CONFIG["use_judge"],
