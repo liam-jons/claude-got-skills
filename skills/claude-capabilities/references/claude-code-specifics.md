@@ -8,6 +8,7 @@ are distinct from API-level features and only apply in Claude Code contexts.
 
 ## Table of Contents
 
+- [Background Tasks & Scheduling](#background-tasks--scheduling)
 - [Agent Teams](#agent-teams)
 - [Chrome Browser Integration](#chrome-browser-integration)
 - [CLI Reference](#cli-reference)
@@ -15,6 +16,84 @@ are distinct from API-level features and only apply in Claude Code contexts.
 - [Skills System](#skills-system)
 - [Extension Architecture](#extension-architecture)
 - [Tool Use Best Practices](#tool-use-best-practices)
+
+---
+
+## Background Tasks & Scheduling
+
+**Status:** GA | **Since:** v2.0.x (background tasks), v2.1.71 (/loop, cron)
+
+Run commands, agents, and prompts asynchronously or on recurring schedules.
+
+### Background Commands
+
+Run any bash command or agent in the background:
+
+```python
+# Bash tool with run_in_background parameter
+{"command": "npm test", "run_in_background": true}
+# Returns a task_id — use TaskOutput to retrieve results later
+```
+
+**Keyboard shortcuts:**
+- `Ctrl+B` — background a running bash command or agent
+- `Ctrl+F` — kill a background agent (two-press confirmation)
+- `/tasks` — view and manage all background tasks
+
+Background task output is truncated to 30K characters with a file path
+reference to the full output. Task completion notifications are capped at
+3 lines with overflow summary to avoid context bloat.
+
+### /loop Command
+
+Run a prompt or slash command on a recurring interval:
+
+```
+/loop 5m check the deploy status
+/loop 10m /run-tests
+/loop 30s check if the build finished
+```
+
+Default interval is 10 minutes if not specified. Useful for:
+- Monitoring deployments or CI/CD pipelines
+- Polling for changes or completion
+- Recurring health checks during development
+- Running periodic code quality checks
+
+### Cron Scheduling Tools
+
+Built-in tools for recurring prompts within a session:
+
+| Tool | Purpose |
+|------|---------|
+| `CronCreate` | Schedule a recurring prompt with interval |
+| `CronDelete` | Remove a scheduled recurring prompt |
+| `CronList` | List all active scheduled prompts |
+
+These are session-scoped — schedules don't persist across sessions.
+
+### Background Agents
+
+Agents can be configured to always run in the background:
+
+```yaml
+---
+name: test-watcher
+description: Runs tests and reports results
+background: true
+tools:
+  - Bash
+  - Read
+---
+```
+
+The `background: true` field in agent frontmatter makes the agent
+always launch as a background task.
+
+### Environment Control
+
+`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS` — disable all background task
+functionality (set in settings.json or environment).
 
 ---
 

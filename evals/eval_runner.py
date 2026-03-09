@@ -347,6 +347,48 @@ TESTS = [
         },
     },
 
+    # Category 5b: Automation & Scheduling (NEW)
+    {
+        "id": "5.6",
+        "category": "Extension Awareness",
+        "prompt": (
+            "I want Claude to check my deployment status every 5 minutes and "
+            "let me know if anything goes wrong. Is there a way to set up "
+            "recurring monitoring like that?"
+        ),
+        "scoring_keywords": {
+            "accuracy": [["loop", "/loop"], ["recurring", "interval", "periodic", "every"],
+                         ["background", "background task"],
+                         ["monitor", "monitoring", "poll", "polling"],
+                         ["cron", "schedule", "scheduled"]],
+            "completeness": [["5m", "5 minutes", "five minute"],
+                             ["ctrl+b", "ctrl-b", "background"],
+                             ["/tasks", "task list", "manage tasks"],
+                             ["croncreate", "cron tool", "cron create"]],
+            "deprecated_patterns": [],
+        },
+    },
+    {
+        "id": "5.7",
+        "category": "Extension Awareness",
+        "prompt": (
+            "I have a test suite that takes 10 minutes to run. I don't want "
+            "to sit and wait for it. Can Claude run it in the background while "
+            "I keep working on other things?"
+        ),
+        "scoring_keywords": {
+            "accuracy": [["background", "background task", "asynchronous"],
+                         ["run_in_background", "run in background"],
+                         ["ctrl+b", "ctrl-b"],
+                         ["continue", "keep working", "while you"]],
+            "completeness": [["task", "task id", "task_id"],
+                             ["taskoutput", "task output", "retrieve", "check output"],
+                             ["/tasks", "task list"],
+                             ["notification", "notify", "notified"]],
+            "deprecated_patterns": [],
+        },
+    },
+
     # Category 6: Negative Tests (No Change Expected)
     {
         "id": "6.1",

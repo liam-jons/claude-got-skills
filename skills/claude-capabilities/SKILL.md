@@ -11,7 +11,7 @@ or answering questions about what Claude can do, to ensure accuracy.
 
 **Last updated:** 2026-03-07
 **Covers models through:** Claude Sonnet 4.6
-**Covers Claude Code through:** v2.0.73+
+**Covers Claude Code through:** v2.1.71+
 
 ## Current Models
 
@@ -83,8 +83,11 @@ Batch processing (50% cost reduction). OS-level sandboxing (Seatbelt/bubblewrap)
 ## Claude Code Capabilities (Post-Training)
 
 Claude Code (CLI, VS Code, JetBrains) has capabilities beyond the API — agent teams,
-Chrome browser integration, rich CLI flags, IDE extensions. See
-`references/claude-code-specifics.md` for full details.
+Chrome browser integration, background tasks, `/loop` scheduling, rich CLI flags, IDE
+extensions. Background tasks (`Ctrl+B` or `run_in_background`) run bash commands and
+agents asynchronously. `/loop 5m /command` runs prompts on recurring intervals. Cron
+tools (`CronCreate`) schedule recurring prompts within a session.
+See `references/claude-code-specifics.md` for full details.
 
 **Extension system** (layered): CLAUDE.md → Skills → Subagents → Agent teams → MCP →
 Hooks → Plugins. Skills follow the Agent Skills open standard (agentskills.io) with
@@ -105,6 +108,7 @@ solves a problem once; a hook automates a repeated step; CLAUDE.md sets a perman
 | Focused task needing isolation | **Subagent** | Own context window, returns summary, keeps main session clean |
 | Parallel work needing coordination | **Agent team** | Independent sessions with peer messaging and shared tasks |
 | Deterministic automation on events | **Hook** | Runs outside the LLM — no tokens, predictable, fast |
+| Recurring monitoring or polling | **/loop** or **Cron tools** | `/loop 5m /check` for intervals, `CronCreate` for scheduled prompts |
 | Package + distribute all of the above | **Plugin** | Bundles skills, hooks, MCP, subagents. Install once, works everywhere |
 
 **Key distinctions people confuse:**
@@ -150,6 +154,12 @@ non-technical users.
 - The user wants something to happen automatically after every edit, commit, or tool use
 - The trigger is deterministic (not "when it seems right" but "every time file X changes")
 - The action doesn't need LLM judgement — linting, formatting, notifications
+
+**Suggest /loop or background tasks when:**
+- The user wants to monitor something over time (deploy, build, CI pipeline)
+- The user asks "check every X minutes" or "keep watching" or "poll for"
+- The user wants a long-running command to not block their session
+- Signal phrases: "keep checking", "watch for", "monitor", "poll", "every few minutes"
 
 **Suggest a plugin when:**
 - The user has built multiple related extensions (skills + hooks + MCP) for one workflow
