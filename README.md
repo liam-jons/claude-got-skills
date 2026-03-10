@@ -42,20 +42,22 @@ npx skills add claude-got-skills/skills@assistant-capabilities
 2. Go to Settings > Capabilities > Skills
 3. Click "Upload skill" and select the ZIP
 
-## Eval results (v2.2.0)
+## Eval results (v2.3.0)
 
 Evaluated against a baseline (no skill) across 43 test prompts in 8 categories using Haiku 4.5 (no web search). Accuracy scores shown (0–7 scale).
 
-| Category | Tests | Control | Treatment | Lift |
-|----------|-------|---------|-----------|------|
-| Architecture Decisions | 3 | 1.67 | 4.33 | **+159%** |
-| Can Claude Do X | 5 | 2.00 | 4.60 | **+130%** |
-| Implementation Guidance | 8 | 2.50 | 4.50 | **+80%** |
-| Model Selection | 1 | 1.00 | 5.00 | **+400%** |
-| Extension Awareness | 8 | 2.00 | 4.50 | **+125%** |
-| Hallucination Detection | 5 | 1.80 | 3.20 | **+78%** |
-| Cross-Platform Awareness | 10 | 1.90 | 3.90 | **+105%** |
-| **Negative (regression check)** | **3** | **5.00** | **5.00** | **0% (no regression)** |
+| Category | Tests | Control | Tier 1 | Tier 1 Lift | Full Skill | Full Lift |
+|----------|-------|---------|--------|-------------|------------|-----------|
+| Architecture Decisions | 3 | 1.67 | 3.00 | +80% | 3.33 | **+100%** |
+| Can Claude Do X | 5 | 2.40 | 2.60 | +8% | 4.20 | **+75%** |
+| Implementation Guidance | 8 | 2.12 | 4.25 | +100% | 4.62 | **+118%** |
+| Model Selection | 1 | 1.00 | 5.00 | +400% | 6.00 | **+500%** |
+| Extension Awareness | 8 | 1.88 | 2.88 | +53% | 4.25 | **+126%** |
+| Hallucination Detection | 5 | 1.20 | 3.20 | +167% | 3.20 | **+167%** |
+| Cross-Platform Awareness | 10 | 1.60 | 3.60 | +125% | 4.10 | **+156%** |
+| **Negative (regression check)** | **3** | **4.67** | **5.00** | +7% | **4.33** | **-7% (noise)** |
+
+**Tier 1** = `quick-reference.md` only (SessionStart hook, ~1.2K tokens, always-on). **Full Skill** = SKILL.md + references (on-demand). Tier 1 delivers 50–70% of the full skill's lift at 61% lower token cost.
 
 ## Structure
 
