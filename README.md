@@ -1,12 +1,12 @@
-# Claude Capabilities Awareness Skill
+# Claude Capabilities Awareness
 
-A skill that gives Claude comprehensive, accurate knowledge about its capabilities across all platforms — Claude.ai, Claude Desktop, Claude Code, CoWork, and the API.
+A plugin and skill that gives Claude comprehensive, accurate knowledge about its capabilities across all platforms — Claude.ai, Claude Desktop, Claude Code, CoWork, and the API.
 
 ## Why this skill exists
 
 Claude's training data has a cutoff. New features — adaptive thinking, dynamic filtering, fast mode, the memory tool, agent teams, the skills ecosystem, and more — ship faster than training data updates. Without this skill, Claude may give outdated or vague answers about what it can do.
 
-With this skill loaded, Claude can accurately recommend the right model for a workload, explain how to process images and PDFs, suggest the right extension pattern for a user's platform, and cite specific API parameters and headers.
+With this plugin installed, Claude has capabilities knowledge injected at every session start (via a SessionStart hook), plus an on-demand skill for deeper questions. Claude can accurately recommend the right model for a workload, explain how capabilities compose, suggest the right extension pattern for a user's platform, and cite specific API parameters and headers.
 
 ## What it covers
 
@@ -26,12 +26,17 @@ Reference files provide deeper detail with code examples for API features, tool 
 
 ## Installation
 
-**Claude Code:**
+**Claude Code (as plugin — recommended, always-on):**
+```bash
+npx skills add claude-got-skills/skills
+```
+
+**Claude Code (skill only — on-demand):**
 ```bash
 npx skills add claude-got-skills/skills@assistant-capabilities
 ```
 
-**Claude.ai / Claude Desktop:**
+**Claude.ai / Claude Desktop (skill only):**
 1. Download the skill as a ZIP file
 2. Go to Settings > Capabilities > Skills
 3. Click "Upload skill" and select the ZIP
@@ -55,10 +60,17 @@ Evaluated against a baseline (no skill) across 43 test prompts in 8 categories u
 
 ```
 ├── .claude-plugin/
+│   ├── plugin.json                   # Plugin manifest (hooks, metadata)
 │   └── marketplace.json              # Skill discovery for npx skills add
+├── hooks/
+│   └── hooks.json                    # SessionStart hook for always-on injection
+├── scripts/
+│   └── inject-capabilities.sh        # Injects quick-reference into session context
+├── data/
+│   └── quick-reference.md            # Condensed capabilities (~90 lines, Tier 1)
 ├── skills/
 │   └── assistant-capabilities/
-│       ├── SKILL.md                  # Always-loaded skill (~270 lines)
+│       ├── SKILL.md                  # Full skill (~270 lines, Tier 2)
 │       └── references/
 │           ├── agent-capabilities.md # Agent SDK, subagents, hooks, plugins
 │           ├── api-features.md       # API params, vision, PDFs, streaming, caching
@@ -71,6 +83,11 @@ Evaluated against a baseline (no skill) across 43 test prompts in 8 categories u
 │   └── browser_eval_report.py       # Report generator for browser eval
 ├── knowledge-base/                   # Source docs from Anthropic documentation
 ```
+
+### Two-tier architecture
+
+- **Tier 1 (always-on)**: `data/quick-reference.md` (~90 lines, ~2K tokens) injected via SessionStart hook into every session. Covers current models, capability composition patterns, platform availability, and key API parameters.
+- **Tier 2 (on-demand)**: Full `SKILL.md` + 5 reference files (~2,700 lines) loaded by Claude when deeper detail is needed — API examples, agent SDK, tool configurations, migration guides.
 
 ## License
 

@@ -1,0 +1,12 @@
+{
+  "name": "claude-got-skills",
+  "version": "2.3.0",
+  "description": "Always-on Claude capabilities awareness — ensures Claude knows what it can do, how features compose, and which platform supports what.",
+  "author": {
+    "name": "claude-got-skills"
+  },
+  "homepage": "https://github.com/claude-got-skills/skills",
+  "repository": "https://github.com/claude-got-skills/skills",
+  "license": "MIT",
+  "keywords": ["capabilities", "models", "api", "platform", "skills"]
+}

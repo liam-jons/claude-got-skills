@@ -39,6 +39,8 @@ logs/
 # Skill-creator eval artifacts
 eval-set-*.json
 eval-trigger-*.txt
+evals/eval-set-*.json
+evals/description-optimization-results/
 
 # Editor
 *.swp
