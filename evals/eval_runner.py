@@ -41,7 +41,7 @@ if _env_path.exists():
 
 # Default paths (relative to script location)
 SCRIPT_DIR = Path(__file__).parent
-DEFAULT_SKILL_PATH = SCRIPT_DIR.parent / "skills" / "claude-capabilities" / "SKILL.md"
+DEFAULT_SKILL_PATH = SCRIPT_DIR.parent / "skills" / "assistant-capabilities" / "SKILL.md"
 DEFAULT_OUTPUT_DIR = SCRIPT_DIR
 
 DEFAULT_MODEL = "claude-haiku-4-5-20251001"
