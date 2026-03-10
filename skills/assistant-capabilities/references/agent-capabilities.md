@@ -341,16 +341,15 @@ Extend Claude through code execution with document generation.
 | PDF | `pdf-20251013` | .pdf files |
 
 ```python
-response = client.beta.messages.create(
-    model="claude-sonnet-4-5-20250929",
+response = client.messages.create(
+    model="claude-sonnet-4-6-20250929",
     max_tokens=16384,
     tools=[
-        {"type": "code_execution_20250825", "name": "code_execution"},
+        {"type": "code_execution_20260120", "name": "code_execution"},
         {"type": "pptx_20251013"}
     ],
     messages=[{"role": "user", "content": "Create a quarterly report deck"}],
-    betas=["code-execution-2025-08-25", "skills-2025-10-02",
-           "files-api-2025-04-14"]
+    betas=["skills-2025-10-02", "files-api-2025-04-14"]
 )
 ```
 

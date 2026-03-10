@@ -45,7 +45,6 @@ model-specific behaviour.
 | Extended thinking | Yes (adaptive) | Yes (adaptive) | Yes (budget) | Yes (budget) | Yes (budget) |
 | Interleaved thinking | Yes (auto) | Yes (auto) | No | Yes (auto) | No |
 | Adaptive thinking | Yes | Yes | No | No | No |
-| Effort: max | Yes | No | No | No | No |
 | Effort: low/med/high | Yes | Yes | Yes | Yes | Yes |
 | Structured outputs | Yes | Yes | Yes | Yes | Yes |
 | Computer use | Yes (v20251124) | Yes (v20251124) | Yes (v20250124) | Yes (v20250124) | Yes (v20251124) |
@@ -65,8 +64,8 @@ model-specific behaviour.
 
 | Model | Full ID | Alias |
 |-------|---------|-------|
-| Opus 4.6 | `claude-opus-4-6` | `claude-opus-4-6-20260210` |
-| Sonnet 4.6 | `claude-sonnet-4-6` | `claude-sonnet-4-6` |
+| Opus 4.6 | `claude-opus-4-6-20260210` | `claude-opus-4-6` |
+| Sonnet 4.6 | `claude-sonnet-4-6-20250929` | `claude-sonnet-4-6` |
 | Haiku 4.5 | `claude-haiku-4-5-20251001` | `claude-haiku-4-5` |
 | Sonnet 4.5 (legacy) | `claude-sonnet-4-5-20250929` | `claude-sonnet-4-5` |
 | Opus 4.5 (legacy) | `claude-opus-4-5-20251101` | `claude-opus-4-5` |
