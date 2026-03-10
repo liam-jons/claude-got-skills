@@ -62,13 +62,13 @@ model-specific behaviour.
 
 ## Model IDs and Aliases
 
-| Model | Full ID | Alias |
-|-------|---------|-------|
-| Opus 4.6 | `claude-opus-4-6-20260210` | `claude-opus-4-6` |
-| Sonnet 4.6 | `claude-sonnet-4-6-20250929` | `claude-sonnet-4-6` |
-| Haiku 4.5 | `claude-haiku-4-5-20251001` | `claude-haiku-4-5` |
-| Sonnet 4.5 (legacy) | `claude-sonnet-4-5-20250929` | `claude-sonnet-4-5` |
-| Opus 4.5 (legacy) | `claude-opus-4-5-20251101` | `claude-opus-4-5` |
+| Model | ID | Notes |
+|-------|-----|-------|
+| Opus 4.6 | `claude-opus-4-6` | No dated variant available |
+| Sonnet 4.6 | `claude-sonnet-4-6` | No dated variant available |
+| Haiku 4.5 | `claude-haiku-4-5-20251001` | Alias: `claude-haiku-4-5` |
+| Sonnet 4.5 (legacy) | `claude-sonnet-4-5-20250929` | Alias: `claude-sonnet-4-5` |
+| Opus 4.5 (legacy) | `claude-opus-4-5-20251101` | Alias: `claude-opus-4-5` |
 
 In Claude Code / Agent SDK, use short names: `opus`, `sonnet`, `haiku`
 (resolves to latest version of each tier).

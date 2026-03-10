@@ -342,7 +342,7 @@ Extend Claude through code execution with document generation.
 
 ```python
 response = client.messages.create(
-    model="claude-sonnet-4-6-20250929",
+    model="claude-sonnet-4-6",
     max_tokens=16384,
     tools=[
         {"type": "code_execution_20260120", "name": "code_execution"},
