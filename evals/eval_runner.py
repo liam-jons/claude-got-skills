@@ -1276,6 +1276,7 @@ def main():
     parser.add_argument("--no-judge", action="store_true", help="Skip LLM-as-judge scoring")
     parser.add_argument("--skill-path", type=Path, default=DEFAULT_SKILL_PATH, help="Path to SKILL.md")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="Output directory for results")
+    parser.add_argument("--tier1-only", action="store_true", help="Use quick-reference.md (Tier 1) instead of full SKILL.md for treatment")
 
     args = parser.parse_args()
 
@@ -1286,13 +1287,21 @@ def main():
     CONFIG["skill_path"] = args.skill_path
     CONFIG["output_dir"] = args.output_dir
 
-    # Verify skill path exists
-    if not CONFIG["skill_path"].exists():
-        print(f"ERROR: Skill file not found at {CONFIG['skill_path']}")
-        sys.exit(1)
-
-    # Load skill content
-    skill_body = load_skill_content(CONFIG["skill_path"])
+    # Tier 1 mode: use quick-reference.md instead of full SKILL.md
+    if args.tier1_only:
+        tier1_path = SCRIPT_DIR.parent / "data" / "quick-reference.md"
+        if not tier1_path.exists():
+            print(f"ERROR: Quick reference not found at {tier1_path}")
+            sys.exit(1)
+        skill_body = tier1_path.read_text()
+        print(f"  ** TIER 1 MODE: Using {tier1_path.name} ({len(skill_body)} chars) **")
+    else:
+        # Verify skill path exists
+        if not CONFIG["skill_path"].exists():
+            print(f"ERROR: Skill file not found at {CONFIG['skill_path']}")
+            sys.exit(1)
+        # Load skill content
+        skill_body = load_skill_content(CONFIG["skill_path"])
 
     # Disable SSL verification for sandbox proxy environment
     http_client = httpx.Client(verify=False)
