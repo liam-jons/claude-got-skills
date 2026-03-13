@@ -1,0 +1,7 @@
+id: non-null-assertion
+language: typescript
+severity: hint
+message: "Non-null assertion (!) bypasses null checking. Consider using optional chaining (?.) or an explicit null check."
+note: "Non-null assertions tell TypeScript to trust the developer, but values can be null at runtime."
+rule:
+  kind: non_null_expression

@@ -1,0 +1,17 @@
+id: string-concat-in-query
+language: typescript
+severity: error
+message: "String concatenation or template literal in SQL/query string. Use parameterised queries to prevent SQL injection."
+note: "SQL injection is OWASP #1. Always use parameterised queries or prepared statements."
+rule:
+  kind: template_string
+  inside:
+    any:
+      - pattern: $OBJ.query($$$)
+      - pattern: $OBJ.execute($$$)
+      - pattern: $OBJ.raw($$$)
+      - pattern: $OBJ.sql($$$)
+    stopBy: end
+  has:
+    kind: template_substitution
+    stopBy: end

@@ -1,0 +1,26 @@
+id: direct-dom-in-react
+language: typescript
+severity: warning
+message: "Direct DOM manipulation in a React component. Use refs, state, or React APIs instead — direct DOM access bypasses React's reconciliation."
+note: "document.getElementById, querySelector, etc. in React components can cause state/DOM desync and break SSR."
+rule:
+  any:
+    - pattern: document.getElementById($ARG)
+    - pattern: document.querySelector($ARG)
+    - pattern: document.querySelectorAll($ARG)
+    - pattern: document.getElementsByClassName($ARG)
+    - pattern: document.getElementsByTagName($ARG)
+  inside:
+    any:
+      - kind: function_declaration
+        has:
+          kind: return_statement
+          has:
+            kind: jsx_element
+            stopBy: end
+          stopBy: end
+      - kind: arrow_function
+        has:
+          kind: jsx_element
+          stopBy: end
+    stopBy: end

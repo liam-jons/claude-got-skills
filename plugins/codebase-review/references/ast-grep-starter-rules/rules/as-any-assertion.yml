@@ -1,0 +1,7 @@
+id: as-any-assertion
+language: typescript
+severity: warning
+message: "'as any' bypasses TypeScript's type system. Use a specific type assertion or fix the underlying type mismatch."
+note: "Type assertions to 'any' hide potential type errors that would otherwise be caught at compile time."
+rule:
+  pattern: $EXPR as any

@@ -1,0 +1,20 @@
+id: unhandled-promise-then
+language: typescript
+severity: warning
+message: "Promise chain with .then() but no .catch(). Unhandled promise rejections crash Node.js and silently fail in browsers."
+note: "Prefer async/await with try-catch, or add .catch() to handle rejections."
+rule:
+  kind: call_expression
+  has:
+    kind: member_expression
+    has:
+      kind: property_identifier
+      regex: "^then$"
+    stopBy: end
+  not:
+    has:
+      kind: member_expression
+      has:
+        kind: property_identifier
+        regex: "^catch$"
+      stopBy: end

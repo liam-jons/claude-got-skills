@@ -1,0 +1,22 @@
+id: catch-ignores-error
+language: typescript
+severity: warning
+message: "Catch block names an error parameter but may discard it. Verify the error is logged, re-thrown, or intentionally suppressed with a comment."
+note: "If the catch body doesn't reference the error, the original failure context is lost, making debugging extremely difficult."
+rule:
+  kind: catch_clause
+  all:
+    - has:
+        field: parameter
+        kind: identifier
+        stopBy: end
+    - has:
+        field: body
+        kind: statement_block
+        not:
+          has:
+            any:
+              - kind: call_expression
+              - kind: throw_statement
+            stopBy: end
+        stopBy: end

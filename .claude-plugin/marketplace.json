@@ -10,6 +10,12 @@
       "description": "Always-on Claude capabilities awareness with SessionStart hook injection and on-demand skill for deep queries.",
       "version": "2.3.0",
       "source": "./"
+    },
+    {
+      "name": "codebase-review",
+      "description": "Full codebase quality review with parallel analysis agents, deterministic tooling, adversarial verification, and structured reporting.",
+      "version": "1.0.0",
+      "source": "./plugins/codebase-review"
     }
   ],
   "skills": [

@@ -1,0 +1,15 @@
+id: console-log-in-source
+language: typescript
+severity: hint
+message: "console.log() left in source code. Remove before shipping or replace with a proper logging utility."
+note: "Console statements can leak sensitive data in production and clutter browser devtools."
+rule:
+  all:
+    - any:
+        - pattern: console.log($$$ARGS)
+        - pattern: console.debug($$$ARGS)
+        - pattern: console.info($$$ARGS)
+    - not:
+        inside:
+          kind: catch_clause
+          stopBy: end

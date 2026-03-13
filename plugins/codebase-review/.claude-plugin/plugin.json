@@ -1,0 +1,18 @@
+{
+  "name": "codebase-review",
+  "version": "1.0.0",
+  "description": "Full codebase quality review with parallel analysis agents, deterministic tooling, adversarial verification, and structured reporting",
+  "author": {
+    "name": "Liam Jones"
+  },
+  "license": "MIT",
+  "keywords": [
+    "code-review",
+    "code-quality",
+    "static-analysis",
+    "codebase-audit",
+    "security-review",
+    "bug-detection",
+    "ast-grep"
+  ]
+}
