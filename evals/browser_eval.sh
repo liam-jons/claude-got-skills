@@ -174,14 +174,11 @@ wait_for_response() {
     local snapshot_text
     snapshot_text=$(ab snapshot -i 2>/dev/null || echo "")
 
-    # Claude.ai shows a "Copy" button on the response after completion
-    # Also check for retry button or new message input becoming active
-    if echo "$snapshot_text" | grep -qi 'Copy\|"Retry"\|"Try again"'; then
-      # Verify it's not just a UI element — check for response-area copy
-      local copy_count
-      copy_count=$(echo "$snapshot_text" | grep -ci 'Copy' || true)
-      if [ "$copy_count" -ge 1 ]; then
-        log "  Response complete (copy button detected at ${elapsed}s)"
+    # Primary: "Stop response" button disappears when generation finishes
+    if ! echo "$snapshot_text" | grep -qi 'Stop response'; then
+      # Verify response actually started (not just a blank page)
+      if echo "$snapshot_text" | grep -qi 'Copy\|"Retry"\|"Try again"\|"Message actions"\|Reply'; then
+        log "  Response complete (Stop button gone, action buttons present at ${elapsed}s)"
         return 0
       fi
     fi
@@ -190,13 +187,21 @@ wait_for_response() {
     local current_text
     current_text=$(ab eval "
       (function() {
-        var el = document.querySelector('[data-testid=\"chat-message-text\"]');
-        if (el) return String(el.innerText.length);
-        var els = document.querySelectorAll('div.font-claude-message, div.prose');
-        if (els.length > 0) {
-          var total = 0;
-          for (var i = 0; i < els.length; i++) total += els[i].innerText.length;
-          return String(total);
+        // Try multiple strategies to measure response length
+        var selectors = [
+          '[data-testid=\"chat-message-text\"]',
+          'div.font-claude-message',
+          'div.prose',
+          'div[class*=\"response\"]',
+          'div[class*=\"message\"][class*=\"assistant\"]'
+        ];
+        for (var i = 0; i < selectors.length; i++) {
+          var els = document.querySelectorAll(selectors[i]);
+          if (els.length > 0) {
+            var total = 0;
+            for (var j = 0; j < els.length; j++) total += els[j].innerText.length;
+            if (total > 0) return String(total);
+          }
         }
         return '0';
       })()
@@ -376,13 +381,26 @@ run_prompt() {
   fi
 
   # Find the textbox/input ref from snapshot
-  # Claude.ai uses a contenteditable div or ProseMirror editor
+  # Claude.ai uses: textbox "Write your prompt to Claude" with placeholder "How can I help you today?"
+  # The element is a ProseMirror contenteditable div wrapped in a group
   local input_ref
-  input_ref=$(echo "$snapshot" | grep -iE 'textbox|"Write your prompt"|contenteditable|ProseMirror|editor|"Send a message"|"Reply"|"How can"|placeholder' | head -1 | grep -o '@e[0-9]*' | head -1 || echo "")
 
+  # Strategy 1: Look for the active textbox with "Write your prompt" label
+  input_ref=$(echo "$snapshot" | grep -iE 'textbox.*[Ww]rite your prompt|textbox.*[Hh]ow can I help' | grep -o '@e[0-9]*' | head -1 || echo "")
+
+  # Strategy 2: Look for any active textbox on the page
   if [[ -z "$input_ref" ]]; then
-    # Broader fallback: look for any textarea or input-like element
-    input_ref=$(echo "$snapshot" | grep -iE 'textarea|input|[Mm]essage|[Cc]hat|[Pp]rompt' | head -1 | grep -o '@e[0-9]*' | head -1 || echo "")
+    input_ref=$(echo "$snapshot" | grep -iE 'textbox.*\[active\]' | grep -o '@e[0-9]*' | head -1 || echo "")
+  fi
+
+  # Strategy 3: Look for textbox with common chat input patterns
+  if [[ -z "$input_ref" ]]; then
+    input_ref=$(echo "$snapshot" | grep -iE 'textbox|contenteditable|ProseMirror|"Send a message"|"Reply"|placeholder.*[Hh]ow can' | head -1 | grep -o '@e[0-9]*' | head -1 || echo "")
+  fi
+
+  # Strategy 4: Broader fallback
+  if [[ -z "$input_ref" ]]; then
+    input_ref=$(echo "$snapshot" | grep -iE 'textarea|[Mm]essage|[Cc]hat|[Pp]rompt' | head -1 | grep -o '@e[0-9]*' | head -1 || echo "")
   fi
 
   local filled=false
