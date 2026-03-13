@@ -82,8 +82,8 @@ RUBRICS = {
         "The computer_20251124 tool version adds a zoom action for detailed screen region inspection, requiring enable_zoom: true in the tool definition",
         # Source: claude-capabilities-computer-use.md lines 186-192
         "Computer use requires a sandboxed computing environment (typically Docker container with virtual X11 display) where Claude can safely interact with applications",
-        # Source: claude-capabilities-computer-use.md lines 350-354
-        "Computer use supports screenshot capture, left_click, type, key (keyboard shortcuts), and mouse_move as basic actions available in all versions",
+        # Source: claude-code-capabilities-use-chrome-browser.md lines 6-8
+        "Claude Code also integrates with Chrome via the Claude in Chrome extension for browser automation (--chrome flag or /chrome command), supporting live debugging, form filling, and data extraction",
     ],
     "2.4": [
         # Source: claude-capabilities-files-api.md line 104
@@ -126,8 +126,10 @@ RUBRICS = {
         "Alternatives to prefill include structured outputs (output_config.format), system prompt instructions, and output_config.format for JSON output",
         # Source: claude-capabilities-new-in-opus-4-6.md lines 106-108
         "The output_format parameter has been moved to output_config.format; the old parameter remains functional but is deprecated",
-        # Source: claude-capabilities-new-in-opus-4-6.md lines 136-138
-        "Opus 4.6 may produce slightly different JSON string escaping in tool call arguments; standard JSON parsers handle these differences automatically",
+        # Source: claude-capabilities-new-in-opus-4-6.md lines 96-98
+        "thinking type 'enabled' with budget_tokens is deprecated on Opus 4.6 and Sonnet 4.6; replaced by adaptive thinking and effort parameter",
+        # Source: claude-capabilities-new-in-opus-4-6.md lines 82-84
+        "Interleaved thinking is a new feature in Opus 4.6/Sonnet 4.6 where thinking blocks appear between tool calls rather than only at the start",
     ],
     "3.3": [
         # Source: claude-capabilities-structured-outputs.md lines 7-9
@@ -245,13 +247,15 @@ RUBRICS = {
     ],
     "5.4": [
         # Source: claude-capabilities-agent-skills-via-api.md lines 36-43
-        "Anthropic provides pre-built Skills with short IDs: pptx (PowerPoint), xlsx (Excel), docx (Word), pdf; these require code execution and skills beta headers",
+        "Anthropic provides pre-built Agent Skills with short IDs: pptx (PowerPoint), xlsx (Excel), docx (Word), pdf; these require code execution and skills beta headers",
         # Source: claude-capabilities-agent-skills-via-api.md lines 28-29
-        "Skills integrate with the Messages API through the code execution tool and execute in the code execution environment via the container parameter",
+        "Agent Skills integrate with the Messages API through the code execution tool and execute in the code execution environment via the container parameter",
         # Source: claude-capabilities-agent-skills-via-api.md line 63
         "Up to 8 Skills can be included per Messages API request via the container parameter",
         # Source: claude-capabilities-features-overview.md line 61
         "Agent Skills use progressive disclosure to efficiently manage context; pre-built Skills include PowerPoint, Excel, Word, and PDF",
+        # Source: claude-capabilities-agent-skills-via-api.md lines 36-43
+        "Both Anthropic pre-built Skills (type 'anthropic') and custom Skills (type 'custom') use the same integration shape in the Messages API",
     ],
     "5.5": [
         # Source: claude-code-capabilities-create-plugins.md lines 7-8
@@ -288,6 +292,8 @@ RUBRICS = {
         "In Claude Code, skills can be invoked directly with /skill-name or loaded automatically when relevant based on the description",
         # Source: claude-code-capabilities-skills.md lines 469-473
         "Skills can be distributed via project commits, plugins, or managed settings for organization-wide deployment",
+        # Source: claude-code-capabilities-extension-options.md (inferred from platform matrix)
+        "CoWork supports skills and MCP via plugins but does not support hooks, subagents, or agent teams — these are Claude Code features",
     ],
 
     # ================================================================
@@ -362,13 +368,15 @@ RUBRICS = {
     ],
     "7.5": [
         # Source: claude-capabilities-computer-use.md line 12
-        "Sonnet 3.7 is listed as deprecated in Anthropic's documentation",
+        "Sonnet 3.7 is listed as deprecated in Anthropic's documentation; it was retired in February 2026",
         # Source: claude-capabilities-new-in-opus-4-6.md lines 13-14
         "Current model IDs are claude-opus-4-6 and claude-sonnet-4-6; the previous generation includes claude-sonnet-4-5-20250929",
         # Source: claude-capabilities-new-in-opus-4-6.md lines 127-128
         "Opus 4.6 has breaking changes: prefilling assistant messages returns a 400 error; this is a migration consideration for users of older models",
         # Source: claude-capabilities-new-in-opus-4-6.md lines 96-98, 106-108
         "Deprecated features in 4.6: thinking type 'enabled' with budget_tokens, output_format parameter (moved to output_config.format); these remain functional but will be removed",
+        # Source: Anthropic deprecation schedule
+        "Haiku 3 is scheduled for retirement in April 2026; users should migrate to Haiku 4.5 or newer models",
     ],
 
     # ================================================================
@@ -383,6 +391,8 @@ RUBRICS = {
         "Hook events include PreToolUse, PostToolUse, SessionStart, Stop, Notification, SubagentStart/Stop — these are Claude Code features",
         # Source: claude-code-capabilities-automate-with-hooks.md lines 365-367
         "Hooks run shell commands deterministically with no LLM token consumption; exit 0 proceeds, exit 2 blocks the action",
+        # Source: claude-code-capabilities-remote-control.md lines 7-9
+        "Remote Control lets Desktop users connect to a Claude Code session from their phone or browser, enabling continued access to automation capabilities remotely",
     ],
     "8.2": [
         # Source: claude-code-capabilities-skills.md lines 7-10
@@ -419,6 +429,8 @@ RUBRICS = {
         "Plugins bundle skills, agents, hooks, and MCP servers; plugin structure is shared across Claude Code and compatible platforms",
         # Source: claude-code-capabilities-extension-options.md line 28
         "Agent teams coordinate multiple independent Claude Code sessions with shared tasks and peer-to-peer messaging",
+        # Source: claude-code-capabilities-use-chrome-browser.md lines 6-8
+        "Chrome browser integration (--chrome flag), git worktrees, remote control, and web sessions (claude.ai/code) are additional Claude Code features not available in CoWork",
     ],
     "8.6": [
         # Source: claude-capabilities-mcp-via-api.md lines 7-9
@@ -469,6 +481,8 @@ RUBRICS = {
         "Hooks provide deterministic automation at lifecycle points — a Claude Code feature for enforcing project rules and automating tasks",
         # Source: claude-capabilities-agent-sdk-overview.md lines 9, 227-238
         "The Claude Agent SDK provides the same tools and agent loop as Claude Code, programmable in Python and TypeScript for building custom multi-step workflows",
+        # Source: claude-code-capabilities-web-sessions.md lines 10-11
+        "Claude Code on the web (claude.ai/code) lets users run Claude Code sessions from the browser, which partially addresses multi-step workflow needs for claude.ai users",
     ],
 
     # ================================================================
@@ -522,11 +536,13 @@ RUBRICS = {
     ],
     "9.6": [
         # Source: claude-capabilities-agent-skills-via-api.md lines 36-43
-        "Anthropic provides pre-built Skills for document generation: pptx (PowerPoint), xlsx (Excel), docx (Word), pdf — available via the API with code execution",
+        "Anthropic provides pre-built Agent Skills for document generation: pptx (PowerPoint), xlsx (Excel), docx (Word), pdf — available via the API with code execution",
         # Source: claude-capabilities-features-overview.md line 42
         "Code execution runs code in a sandboxed environment and can generate files for download, including documents and data visualizations",
         # Source: claude-capabilities-agent-skills-via-api.md lines 28-29
-        "Skills integrate with the Messages API through the code execution tool and require the skills-2025-10-02 and code-execution-2025-08-25 beta headers",
+        "Agent Skills integrate with the Messages API through the code execution tool and require the skills-2025-10-02 and code-execution-2025-08-25 beta headers",
+        # Source: claude-capabilities-agent-skills-via-api.md lines 36-43
+        "Both Anthropic pre-built Skills and custom user-uploaded Skills are supported; custom Skills are managed via the Skills API",
     ],
     "9.7": [
         # Source: claude-capabilities-features-overview.md lines 21-32
@@ -583,5 +599,135 @@ RUBRICS = {
         "Claude's 1M token context window (beta) can process very large document sets in a single request as an alternative to embedding-based RAG for moderate-sized collections",
         # Source: claude-capabilities-features-overview.md line 25
         "Batch processing (50% cost reduction) can process large volumes of documents asynchronously for analysis at scale",
+    ],
+
+    # ================================================================
+    # New tests: Can Claude Do X (Code Review, Remote Control)
+    # ================================================================
+    "2.6": [
+        # Source: claude-code-capabilities-code-review.md lines 5-9
+        "Code Review is a research preview feature for Teams and Enterprise that analyzes GitHub pull requests using a fleet of specialized agents examining code in the context of the full codebase",
+        # Source: claude-code-capabilities-code-review.md lines 17-24
+        "Findings are tagged by severity: Red (Normal — bug that should be fixed before merging), Yellow (Nit — minor issue), Purple (Pre-existing — bug not introduced by this PR)",
+        # Source: claude-code-capabilities-code-review.md lines 67-69
+        "Reviews average $15-25 per PR, scaling with PR size and complexity; billed separately through extra usage, not counting against plan's included usage",
+        # Source: claude-code-capabilities-code-review.md lines 47-57
+        "REVIEW.md at the repo root provides review-only guidance (style guidelines, framework conventions, things to always flag or skip); CLAUDE.md is also read and new violations are flagged as nits",
+        # Source: claude-code-capabilities-code-review.md lines 12-13
+        "Reviews trigger on PR open, on every push, or manually via @claude review comment; multiple agents analyze in parallel on Anthropic infrastructure",
+    ],
+    "2.7": [
+        # Source: claude-code-capabilities-remote-control.md lines 5-7
+        "Remote Control is available on all plans (Pro, Max, Team, Enterprise) and connects claude.ai/code or the Claude mobile app (iOS/Android) to a Claude Code session on your machine",
+        # Source: claude-code-capabilities-remote-control.md lines 9
+        "Key difference from Claude Code on the web: Remote Control executes on YOUR machine (local filesystem, MCP servers, tools, project config stay available)",
+        # Source: claude-code-capabilities-remote-control.md lines 26-31
+        "Start with 'claude remote-control' or '/remote-control' (/rc) from an existing session; --name flag sets custom session title; spacebar shows QR code for phone access",
+        # Source: claude-code-capabilities-remote-control.md lines 43-48
+        "Connect from another device by opening the session URL, scanning the QR code with Claude mobile app, or finding the session at claude.ai/code",
+        # Source: claude-code-capabilities-remote-control.md lines 14-16
+        "Conversation stays in sync across all connected devices; auto-reconnects when machine comes back online after sleep or network drop",
+    ],
+
+    # ================================================================
+    # New tests: Implementation Guidance (Cloud Sessions)
+    # ================================================================
+    "3.9": [
+        # Source: claude-code-capabilities-web-sessions.md lines 44-48
+        "The --remote flag creates a new web session that runs in the cloud: 'claude --remote \"Fix the auth bug\"'; task runs on Anthropic infrastructure while you work locally",
+        # Source: claude-code-capabilities-web-sessions.md lines 50-55
+        "Each --remote creates an independent session, enabling parallel execution of multiple tasks simultaneously",
+        # Source: claude-code-capabilities-web-sessions.md lines 57-62
+        "/teleport (or /tp) brings a web session back to the terminal; also available via 'claude --teleport' or the 'Open in CLI' button on the web",
+        # Source: claude-code-capabilities-web-sessions.md lines 95-100
+        "Setup scripts (bash) run before Claude Code launches on new cloud sessions, configured in environment settings UI; they prepare dependencies and environment",
+        # Source: claude-code-capabilities-web-sessions.md lines 31-36
+        "Repository is cloned to an Anthropic-managed VM with internet access configured per settings; results pushed to branch and PR created",
+    ],
+
+    # ================================================================
+    # New tests: Extension Awareness (Slack)
+    # ================================================================
+    "5.9": [
+        # Source: claude-code-capabilities-slack.md lines 5-6
+        "Claude Code in Slack creates Claude Code web sessions when you mention @Claude with a coding task, delegating development work without leaving Slack conversations",
+        # Source: claude-code-capabilities-slack.md lines 30-33
+        "Routing modes: 'Code only' routes all @mentions to Code sessions; 'Code + Chat' uses intelligent routing between Code and Chat with retry buttons",
+        # Source: claude-code-capabilities-slack.md lines 37-42
+        "Workflow: @mention Claude -> coding intent detected -> new web session created -> progress posted to thread -> completion with summary + 'View Session' and 'Create PR' buttons",
+        # Source: claude-code-capabilities-slack.md lines 44-46
+        "Context gathering: gathers context from all thread messages and recent channel messages to inform the coding task",
+        # Source: claude-code-capabilities-slack.md lines 20-24
+        "Prerequisites: Pro/Max/Teams/Enterprise plan, Claude Code on the web enabled, GitHub account connected with repos, Slack account linked to Claude account",
+    ],
+
+    # ================================================================
+    # New tests: Cross-Platform Awareness
+    # ================================================================
+    "8.11": [
+        # Source: claude-code-capabilities-remote-control.md lines 63-69
+        "Remote Control executes on your machine (full local env access); Claude Code on the web executes in Anthropic cloud (cloud clone of repo)",
+        # Source: claude-code-capabilities-remote-control.md line 9
+        "Remote Control keeps local filesystem, MCP servers, tools, and project config available; web sessions operate in a cloud VM with a cloned repo",
+        # Source: claude-code-capabilities-web-sessions.md lines 57-62
+        "/teleport brings web sessions back to terminal; --remote sends tasks from terminal to cloud; these are one-way transfers",
+        # Source: claude-code-capabilities-remote-control.md lines 65-69
+        "Use Remote Control when in the middle of local work and want to continue from another device; use web sessions when no local setup is needed or for parallel tasks on remote repos",
+    ],
+    "8.12": [
+        # Source: claude-code-capabilities-jetbrains.md lines 5-6
+        "Claude Code integrates with JetBrains IDEs (IntelliJ, PyCharm, WebStorm, GoLand, PhpStorm, Android Studio) through a dedicated plugin with diff viewing and selection context",
+        # Source: claude-code-capabilities-vscode.md lines 5-6
+        "The VS Code extension provides a native graphical interface for Claude Code with plan review, auto-accept edits, @-mentions, conversation history, and multi-tab support",
+        # Source: claude-code-capabilities-vscode.md lines 202-204
+        "Claude Code is available as both VS Code extension (graphical panel) and CLI (terminal); some features are CLI-only but core agentic capabilities are the same across all surfaces",
+        # Source: claude-code-capabilities-vscode.md lines 180-181
+        "Settings in ~/.claude/settings.json are shared between the extension and CLI, ensuring consistent configuration across all interfaces",
+    ],
+
+    # ================================================================
+    # Category 10: Competitor Migration
+    # ================================================================
+    "10.1": [
+        # Source: claude-code-capabilities-extension-options.md lines 20-28
+        "Claude Code provides agentic capabilities including subagents (isolated execution), agent teams (multi-session coordination), hooks (deterministic automation), skills (reusable workflows), and MCP (external services)",
+        # Source: claude-code-capabilities-code-review.md lines 5-9
+        "Code Review provides automated PR analysis with severity-tagged inline comments, running multiple specialized agents in parallel on Anthropic infrastructure",
+        # Source: claude-code-capabilities-web-sessions.md lines 10-11
+        "Claude Code on the web enables cloud-based sessions, parallel task execution, and integration with Slack for team workflows",
+        # Source: claude-code-capabilities-jetbrains.md + vscode.md
+        "Claude Code integrates with VS Code, JetBrains IDEs, and the terminal CLI with shared settings, providing consistent agentic features across all surfaces",
+    ],
+    "10.2": [
+        # Source: claude-capabilities-features-overview.md line 42
+        "Code execution runs Python and JavaScript in a sandboxed container for data analysis, calculations, and file processing — analogous to ChatGPT's Code Interpreter",
+        # Source: claude-capabilities-programmatic-tool-calling.md lines 1-7
+        "Programmatic tool calling allows Claude to write code that calls tools within the code execution container, reducing latency and token consumption for multi-tool workflows",
+        # Source: claude-capabilities-features-overview.md line 44
+        "Web search is a built-in server-side tool that augments Claude's knowledge with current web data; web fetch retrieves full content from specified URLs",
+        # Source: claude-capabilities-agent-skills-via-api.md lines 36-43
+        "Agent Skills extend code execution with pre-built capabilities: pptx, xlsx, docx, pdf document generation, plus custom Skills via the Skills API",
+    ],
+    "10.3": [
+        # Source: claude-code-capabilities-skills.md lines 7-10
+        "Skills are Claude's equivalent of custom GPTs: reusable knowledge and workflows that can be invoked with /skill-name or loaded automatically when relevant based on description",
+        # Source: claude-code-capabilities-create-plugins.md lines 7-8
+        "Plugins bundle skills, hooks, MCP servers, and agents into a single installable unit for team distribution via plugin marketplaces",
+        # Source: claude-code-capabilities-skills.md lines 96-101
+        "Skills are stored at enterprise, personal, project, and plugin levels; on Claude.ai and Desktop, skills upload as ZIP files with auto-invocation",
+        # Source: claude-code-capabilities-extension-options.md lines 37-39
+        "CLAUDE.md provides persistent context loaded every session (equivalent to custom GPT instructions); Projects on Claude.ai serve a similar purpose",
+    ],
+    "10.4": [
+        # Source: claude-capabilities-agent-sdk-overview.md lines 9, 227-238
+        "The Claude Agent SDK provides built-in tools (Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch) in Python and TypeScript, enabling custom multi-step agent workflows",
+        # Source: claude-capabilities-files-api.md lines 7-8
+        "The Files API supports uploads up to 500 MB per file and 100 GB per organization; files can be referenced across multiple conversations and API calls",
+        # Source: claude-capabilities-features-overview.md line 42
+        "Code execution provides sandboxed Python/JavaScript execution for data analysis; combined with Agent Skills, it handles document generation and data processing",
+        # Source: claude-capabilities-mcp-via-api.md lines 7-9
+        "The MCP connector enables connecting to remote MCP servers from the Messages API for external tool integration without implementing a separate MCP client",
+        # Source: claude-capabilities-memory-tool.md lines 7-8
+        "The memory tool enables cross-conversation persistence through a client-side file directory, providing state management across agent interactions",
     ],
 }

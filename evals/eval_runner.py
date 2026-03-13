@@ -177,7 +177,8 @@ TESTS = [
                          "screenshot", "mouse", "keyboard"],
             "completeness": ["zoom", "beta", ["chrome", "browser"],
                              ["coordinate", "coordinates", "pixel"],
-                             ["sandbox", "sandboxed", "isolation"]],
+                             ["sandbox", "sandboxed", "isolation"],
+                             ["chrome extension", "claude in chrome", "--chrome"]],
             "deprecated_patterns": [],
         },
     },
@@ -258,7 +259,10 @@ TESTS = [
                          "system prompt"],
             "completeness": ["output_config", ["json_schema", "json schema"],
                              ["breaking change", "breaking", "incompatible"],
-                             ["migration", "migrate", "upgrade"]],
+                             ["migration", "migrate", "upgrade"],
+                             ["budget_tokens", "budget tokens"],
+                             ["output_format", "output format"],
+                             ["interleaved", "interleaved thinking"]],
             "deprecated_patterns": ["prefill works", "prefill is supported"],
         },
     },
@@ -479,7 +483,7 @@ TESTS = [
         "scoring_keywords": {
             "accuracy": ["skill", "pptx", ["presentation", "slides", "slide deck"],
                          ["document", "doc"], ["pre-built", "prebuilt", "built-in", "existing"],
-                         "anthropic"],
+                         "anthropic", ["agent skill", "agent skills"]],
             "completeness": [["formatting", "format"], ["template", "templates"],
                              ["best practices", "best practice", "guidelines"],
                              "skill", ["install", "add", "npx skills"]],
@@ -570,7 +574,8 @@ TESTS = [
                              ["desktop", "claude desktop"],
                              ["claude code", "cli"],
                              ["reference file", "reference files", "read tool",
-                              "cannot read reference", "no reference file access"]],
+                              "cannot read reference", "no reference file access"],
+                             ["cowork", "co-work"]],
             "deprecated_patterns": [],
         },
     },
@@ -709,7 +714,8 @@ TESTS = [
             "completeness": [["haiku 3.5", "haiku 3 retiring", "haiku 3"],
                              ["breaking change", "breaking", "incompatible", "prefill"],
                              ["structured output", "output_config"],
-                             ["model id", "model identifier", "claude-sonnet-4"]],
+                             ["model id", "model identifier", "claude-sonnet-4"],
+                             ["april 2026", "apr 2026"]],
             "deprecated_patterns": ["sonnet 3.7 is still available", "sonnet 3.7 is supported",
                                     "sonnet 3.7 is the latest", "3.7 is current",
                                     "no need to migrate"],
@@ -741,7 +747,8 @@ TESTS = [
             "completeness": [["posttooluse", "post tool use", "post-tool-use", "lifecycle"],
                              ["background", "background task", "ctrl+b"],
                              ["deterministic", "no tokens", "no llm"],
-                             ["mcp", "mcp server"]],
+                             ["mcp", "mcp server"],
+                             ["remote control", "remote-control", "/rc"]],
             "deprecated_patterns": ["desktop supports hooks", "desktop has automation",
                                     "desktop can schedule", "desktop supports /loop"],
         },
@@ -840,7 +847,11 @@ TESTS = [
             "completeness": [["background", "background task", "/loop"],
                              ["claude.md", "CLAUDE.md", ".claude/rules"],
                              ["plugin", "plugins"],
-                             ["browser", "browser automation"]],
+                             ["browser", "browser automation"],
+                             ["chrome", "chrome extension", "--chrome"],
+                             ["worktree", "git worktree"],
+                             ["remote control", "remote-control", "/rc"],
+                             ["web session", "claude.ai/code", "cloud session"]],
             "deprecated_patterns": ["cowork supports hooks", "cowork has subagents",
                                     "cowork supports agent teams",
                                     "cowork supports background tasks"],
@@ -957,11 +968,13 @@ TESTS = [
                          ["agent team", "agent teams"],
                          ["not on claude.ai", "not available on claude.ai",
                           "claude.ai doesn't", "claude.ai does not",
-                          "not supported on claude.ai"]],
+                          "not supported on claude.ai"],
+                         ["claude.ai/code", "web session", "code on the web"]],
             "completeness": [["hook", "hooks"],
                              ["background", "background task"],
                              ["agent sdk", "sdk"],
-                             ["api", "orchestrat"]],
+                             ["api", "orchestrat"],
+                             ["remote", "remote control", "--remote"]],
             "deprecated_patterns": ["claude.ai supports subagents",
                                     "claude.ai has agent teams",
                                     "multi-step workflows on claude.ai"],
@@ -1104,8 +1117,9 @@ TESTS = [
                          ["docx", "word", "document"],
                          ["generate", "create", "produce"]],
             "completeness": [["code execution", "sandbox"],
-                             ["skill", "agent skill", "document generation"],
-                             ["pdf", "pdf generation"]],
+                             ["skill", "agent skill", "agent skills", "document generation"],
+                             ["pdf", "pdf generation"],
+                             ["office add-in", "excel add-in", "powerpoint add-in"]],
             "deprecated_patterns": ["claude can only generate text",
                                     "cannot create files", "text only output"],
         },
@@ -1249,6 +1263,271 @@ TESTS = [
             "deprecated_patterns": ["claude can generate embeddings",
                                     "use claude for embeddings",
                                     "claude has a built-in embedding endpoint"],
+        },
+    },
+
+    # ================================================================
+    # New tests: Can Claude Do X (Code Review, Remote Control)
+    # ================================================================
+
+    # 2.6: Can Claude Do X — Code Review
+    {
+        "id": "2.6",
+        "category": "Can Claude Do X",
+        "prompt": (
+            "I heard Claude can now review my pull requests automatically. How does "
+            "Code Review work? What does it check and how much does it cost?"
+        ),
+        "scoring_keywords": {
+            "accuracy": [["code review", "pr review"],
+                         ["pr", "pull request"],
+                         ["severity", "red", "yellow", "purple"],
+                         ["inline comment", "inline comments", "inline findings"],
+                         ["$15", "$25", "$15-25", "15 to 25"]],
+            "completeness": [["review.md", "REVIEW.md"],
+                             ["claude.md", "CLAUDE.md"],
+                             ["teams", "enterprise"],
+                             ["@claude review", "@claude"]],
+            "deprecated_patterns": ["code review is not available",
+                                    "claude cannot review prs",
+                                    "claude cannot review pull requests"],
+        },
+    },
+
+    # 2.7: Can Claude Do X — Remote Control
+    {
+        "id": "2.7",
+        "category": "Can Claude Do X",
+        "prompt": (
+            "I'm working on my laptop but need to step away. Can I continue my "
+            "Claude Code session from my phone while I'm on the bus?"
+        ),
+        "scoring_keywords": {
+            "accuracy": [["remote control", "remote-control"],
+                         ["/rc", "/remote-control", "remote-control"],
+                         ["claude.ai/code", "web session", "code on the web"],
+                         ["mobile", "phone", "ios", "android"]],
+            "completeness": [["qr code", "qr"],
+                             ["session url", "session link", "url"],
+                             ["sync", "in sync", "stays in sync"],
+                             ["local environment", "your machine", "local filesystem"],
+                             ["--name", "session name"]],
+            "deprecated_patterns": ["cannot continue sessions",
+                                    "must stay at computer",
+                                    "no way to access remotely"],
+        },
+    },
+
+    # ================================================================
+    # New tests: Implementation Guidance (Cloud sessions)
+    # ================================================================
+
+    # 3.9: Implementation Guidance — Cloud Sessions
+    {
+        "id": "3.9",
+        "category": "Implementation Guidance",
+        "prompt": (
+            "I want to start Claude Code tasks from my terminal but have them run "
+            "in the cloud so I can close my laptop. How do I set this up?"
+        ),
+        "scoring_keywords": {
+            "accuracy": [["--remote", "remote flag"],
+                         ["web session", "cloud session", "code on the web"],
+                         ["claude.ai/code", "claude.ai"],
+                         ["cloud", "anthropic infrastructure", "cloud infrastructure"]],
+            "completeness": [["/teleport", "/tp"],
+                             ["/tasks", "task list", "monitor"],
+                             ["parallel", "independent session", "multiple"],
+                             ["setup script", "environment"],
+                             ["github", "repository", "repo"]],
+            "deprecated_patterns": ["must keep terminal open for all tasks",
+                                    "claude code only runs locally",
+                                    "no cloud option"],
+        },
+    },
+
+    # ================================================================
+    # New tests: Extension Awareness (Slack)
+    # ================================================================
+
+    # 5.9: Extension Awareness — Slack Integration
+    {
+        "id": "5.9",
+        "category": "Extension Awareness",
+        "prompt": (
+            "My team discusses bugs in Slack and then someone has to context-switch "
+            "to fix them. Is there a way to go straight from a Slack conversation "
+            "to a code fix?"
+        ),
+        "scoring_keywords": {
+            "accuracy": [["slack", "@claude in slack"],
+                         ["@claude", "mention claude"],
+                         ["claude code", "code session"],
+                         ["web session", "claude.ai/code", "code on the web"]],
+            "completeness": [["routing mode", "routing", "code only", "code + chat"],
+                             ["thread", "thread context", "channel"],
+                             ["create pr", "pull request"],
+                             ["view session", "session transcript"],
+                             ["channel", "channels"]],
+            "deprecated_patterns": ["claude cannot integrate with slack",
+                                    "no slack support",
+                                    "slack integration is not available"],
+        },
+    },
+
+    # ================================================================
+    # New tests: Cross-Platform Awareness
+    # ================================================================
+
+    # 8.11: Cross-Platform — Remote Control vs Web Sessions
+    {
+        "id": "8.11",
+        "category": "Cross-Platform Awareness",
+        "prompt": (
+            "What's the difference between Remote Control and Claude Code on the "
+            "web? They both seem to let me use Claude Code from a browser."
+        ),
+        "scoring_keywords": {
+            "accuracy": [["remote control", "remote-control"],
+                         ["claude code on the web", "code on the web", "web session"],
+                         ["local", "your machine", "local filesystem"],
+                         ["cloud", "anthropic", "anthropic infrastructure"]],
+            "completeness": [["/teleport", "/tp", "teleport"],
+                             ["--remote", "remote flag"],
+                             ["mcp", "mcp server", "local tools"],
+                             ["filesystem", "file system", "local files"],
+                             ["setup script", "environment"]],
+            "deprecated_patterns": ["they are the same thing",
+                                    "no difference between",
+                                    "remote control and web sessions are identical"],
+        },
+    },
+
+    # 8.12: Cross-Platform — IDE Parity
+    {
+        "id": "8.12",
+        "category": "Cross-Platform Awareness",
+        "prompt": (
+            "I use Claude Code in VS Code. My teammate prefers JetBrains. Another "
+            "uses the terminal. Are we getting different features?"
+        ),
+        "scoring_keywords": {
+            "accuracy": [["parity", "same tools", "same capabilities", "same agentic loop",
+                          "same agent loop", "same features"],
+                         ["cli", "terminal", "command line"],
+                         ["vs code", "vscode"],
+                         ["jetbrains", "intellij", "pycharm", "webstorm"]],
+            "completeness": [["settings", "settings shared", "~/.claude/settings.json",
+                              "shared settings"],
+                             ["desktop app", "desktop"],
+                             ["diff", "diff view", "diff viewing"],
+                             ["selection", "selection context", "diagnostic"]],
+            "deprecated_patterns": ["vs code has more features",
+                                    "cli is limited",
+                                    "jetbrains has fewer features"],
+        },
+    },
+
+    # ================================================================
+    # Category 10: Competitor Migration
+    # ================================================================
+
+    # 10.1: Competitor Migration — Copilot Comparison
+    {
+        "id": "10.1",
+        "category": "Competitor Migration",
+        "prompt": (
+            "We've been using GitHub Copilot for code completion. Our CTO wants to "
+            "evaluate Claude as a replacement. What can Claude do that Copilot "
+            "can't, and what would we lose?"
+        ),
+        "scoring_keywords": {
+            "accuracy": [["agent", "agentic"],
+                         ["multi-step", "multi step", "multistep"],
+                         ["subagent", "sub-agent", "sub agent"],
+                         ["skill", "skills"],
+                         ["hook", "hooks"]],
+            "completeness": [["code review", "pr review"],
+                             ["background", "background task"],
+                             ["mcp", "mcp server", "external service"],
+                             ["extension", "plugin", "extend"],
+                             ["ide", "vs code", "jetbrains"]],
+            "deprecated_patterns": ["claude is just a chatbot",
+                                    "claude cannot edit code",
+                                    "claude is only for conversation"],
+        },
+    },
+
+    # 10.2: Competitor Migration — Code Interpreter Equivalent
+    {
+        "id": "10.2",
+        "category": "Competitor Migration",
+        "prompt": (
+            "I'm migrating from ChatGPT to Claude for our team. My colleagues keep "
+            "asking about 'Code Interpreter' — does Claude have something equivalent?"
+        ),
+        "scoring_keywords": {
+            "accuracy": [["code execution", "code sandbox", "code_execution"],
+                         ["sandbox", "sandboxed", "container"],
+                         ["python", "javascript"],
+                         ["programmatic tool calling", "ptc", "programmatic"]],
+            "completeness": [["web search", "web_search"],
+                             ["dynamic filtering", "filter"],
+                             ["files api", "file upload"],
+                             ["agent skill", "agent skills", "skill"]],
+            "deprecated_patterns": ["claude has code interpreter",
+                                    "claude cannot execute code",
+                                    "no code execution available"],
+        },
+    },
+
+    # 10.3: Competitor Migration — Custom GPTs Equivalent
+    {
+        "id": "10.3",
+        "category": "Competitor Migration",
+        "prompt": (
+            "My company uses ChatGPT Teams with custom GPTs. We're considering "
+            "switching to Claude. What's the equivalent of custom GPTs in the "
+            "Claude ecosystem?"
+        ),
+        "scoring_keywords": {
+            "accuracy": [["skill", "skills"],
+                         ["project", "projects"],
+                         ["claude.md", "CLAUDE.md"],
+                         ["plugin", "plugins"]],
+            "completeness": [["auto-invoke", "auto invoke", "automatically"],
+                             ["skills.sh", "skill marketplace", "marketplace"],
+                             ["hook", "hooks"],
+                             ["mcp", "mcp server"],
+                             ["zip", "zip upload"]],
+            "deprecated_patterns": ["claude has custom gpts",
+                                    "no way to customize claude",
+                                    "claude doesn't support customization"],
+        },
+    },
+
+    # 10.4: Competitor Migration — Assistants API Equivalent
+    {
+        "id": "10.4",
+        "category": "Competitor Migration",
+        "prompt": (
+            "We built automations with OpenAI's Assistants API (with file search "
+            "and code interpreter). What's the Claude equivalent for building "
+            "similar agent workflows?"
+        ),
+        "scoring_keywords": {
+            "accuracy": [["agent sdk", "claude agent sdk"],
+                         ["messages api", "messages"],
+                         ["tool use", "tool calling", "tools"],
+                         ["memory tool", "memory"]],
+            "completeness": [["files api", "file upload", "file_id"],
+                             ["code execution", "code sandbox"],
+                             ["web search", "web_search"],
+                             ["mcp connector", "mcp"],
+                             ["batch", "batch processing"]],
+            "deprecated_patterns": ["claude has an assistants api",
+                                    "claude cannot build agents",
+                                    "no agent framework available"],
         },
     },
 ]
