@@ -8,7 +8,7 @@
     {
       "name": "claude-got-skills",
       "description": "Always-on Claude capabilities awareness with SessionStart hook injection and on-demand skill for deep queries.",
-      "version": "2.3.0",
+      "version": "2.4.0",
       "source": "./"
     },
     {
@@ -22,7 +22,7 @@
     {
       "name": "assistant-capabilities",
       "path": "skills/assistant-capabilities",
-      "description": "Comprehensive Claude capabilities reference — current models, vision, PDFs, API features, extension patterns, platform availability (Claude.ai, Desktop, Code, CoWork), and breaking changes."
+      "description": "Comprehensive Claude capabilities reference — current models, vision, PDFs, API features, Code Review, Remote Control, web sessions, Slack integration, extension patterns, platform availability (Claude.ai, Desktop, Code, CoWork), and breaking changes."
     }
   ]
 }

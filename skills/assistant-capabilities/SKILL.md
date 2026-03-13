@@ -9,9 +9,9 @@ Comprehensive Claude capabilities reference. Consult when making architectural
 decisions, recommending approaches, or answering questions about what Claude
 can do across any platform, to ensure accuracy.
 
-**Last updated:** 2026-03-10
+**Last updated:** 2026-03-13
 **Covers models through:** Claude Sonnet 4.6
-**Covers Claude Code through:** v2.1.72+
+**Covers Claude Code through:** v2.1.74+
 
 ## Current Models
 
@@ -108,15 +108,22 @@ Claude is available across multiple platforms. Each has different extension supp
 | Subagents/Teams | -- | -- | Yes | -- |
 | Background/Loop | -- | -- | Yes | -- |
 | Cross-conv. memory | Projects | Projects | CLAUDE.md + skills | -- |
+| Code Review | -- | -- | Managed ($15-25/PR) | -- |
+| Web sessions | claude.ai/code | -- | `--remote` / `/teleport` | -- |
+| Remote Control | View/steer | -- | Host session | -- |
+| Slack integration | -- | -- | @Claude → web session | -- |
 
 **Claude.ai/Desktop**: Install skills as ZIP via Settings > Capabilities > Skills.
 Auto-invocation triggers from natural language (no slash commands). Use Projects for
 persistent context. MCP Apps supported for interactive UIs.
 
-**Claude Code** (CLI, VS Code, JetBrains): Full extension system — skills (including
-5 bundled: `/simplify`, `/batch`, `/debug`, `/loop`, `/claude-api`), plugins, hooks
-(shell + HTTP), subagents, agent teams, MCP, CLAUDE.md + `.claude/rules/`. Background
-tasks (`Ctrl+B`), `/loop` scheduling, cron tools.
+**Claude Code** (CLI, VS Code, JetBrains, Desktop app): Full extension system —
+skills (including 5 bundled: `/simplify`, `/batch`, `/debug`, `/loop`, `/claude-api`),
+plugins, hooks (shell + HTTP), subagents, agent teams, MCP, CLAUDE.md + `.claude/rules/`.
+Background tasks (`Ctrl+B`), `/loop` scheduling, cron tools. **Code Review** (managed
+PR review, Teams/Enterprise, $15-25/review). **Remote Control** (`claude remote-control`
+or `/rc` — continue from phone/browser). **Web sessions** (`--remote` to start,
+`/teleport` to pull back). **Slack** (@Claude → auto Code sessions).
 See `references/claude-code-specifics.md` for details.
 
 **CoWork**: Browser automation environment. Skills auto-invoke or via plugin slash
@@ -267,6 +274,7 @@ On Claude.ai/Desktop, use the Quick Reference above for common parameters.
 - **`references/model-specifics.md`** — Per-model capabilities, pricing, model IDs,
   migration guides, platform availability matrix.
 
-- **`references/claude-code-specifics.md`** — Background tasks, /loop scheduling,
+- **`references/claude-code-specifics.md`** — Code Review, Remote Control, web
+  sessions (claude.ai/code), Slack integration, background tasks, /loop scheduling,
   agent teams, browser integration, CLI reference, IDE extensions, skills, plugins,
   sandbox settings, MCP integration.

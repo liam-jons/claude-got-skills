@@ -4,7 +4,7 @@ Detailed API feature documentation with code examples, beta headers, and
 platform availability. Consult when implementing API calls or configuring
 features.
 
-**Last updated:** 2026-03-09
+**Last updated:** 2026-03-13
 
 ## Table of Contents
 

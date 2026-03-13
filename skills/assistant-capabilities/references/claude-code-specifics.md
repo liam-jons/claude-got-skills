@@ -1,14 +1,19 @@
 # Claude Code Specifics Reference
 
-Claude Code-specific features: agent teams, browser integration, CLI
-reference, IDE extensions, skills system, and plugin development. These capabilities
-are distinct from API-level features and only apply in Claude Code contexts.
+Claude Code-specific features: code review, remote control, web sessions, Slack
+integration, agent teams, browser integration, CLI reference, IDE extensions,
+skills system, and plugin development. These capabilities are distinct from
+API-level features and only apply in Claude Code contexts.
 
-**Last updated:** 2026-03-10
-**Covers through:** v2.1.72
+**Last updated:** 2026-03-13
+**Covers through:** v2.1.74
 
 ## Table of Contents
 
+- [Code Review](#code-review)
+- [Remote Control](#remote-control)
+- [Claude Code on the Web](#claude-code-on-the-web)
+- [Slack Integration](#slack-integration)
 - [Background Tasks & Scheduling](#background-tasks--scheduling)
 - [Agent Teams](#agent-teams)
 - [Browser Integration](#browser-integration)
@@ -17,6 +22,118 @@ are distinct from API-level features and only apply in Claude Code contexts.
 - [Skills System](#skills-system)
 - [Extension Architecture](#extension-architecture)
 - [Tool Use Best Practices](#tool-use-best-practices)
+
+---
+
+## Code Review
+
+**Status:** Research preview | **Access:** Teams and Enterprise only (not available with ZDR)
+
+Managed PR review service. A fleet of specialized agents analyze GitHub PRs in
+context of the full codebase, looking for logic errors, security vulnerabilities,
+broken edge cases, and regressions. Findings posted as inline comments.
+
+### Key Details
+
+- **Severity levels**: Normal (bug, fix before merge), Nit (minor), Pre-existing (not from this PR)
+- **Triggers**: Once after PR creation, after every push, or manual (`@claude review`)
+- **Customization**: `CLAUDE.md` (shared rules) + `REVIEW.md` (review-only guidance at repo root)
+- **Pricing**: $15-25 average per review, billed separately through extra usage
+- **Setup**: claude.ai/admin-settings/claude-code → install Claude GitHub App → select repos
+- **Analytics**: claude.ai/analytics/code-review (PRs reviewed, weekly cost, auto-resolved feedback)
+
+For self-hosted reviews, use GitHub Actions or GitLab CI/CD instead.
+
+---
+
+## Remote Control
+
+**Status:** GA | **Access:** All plans (Pro, Max, Team, Enterprise)
+
+Connect claude.ai/code or the Claude mobile app (iOS/Android) to a local Claude
+Code session. Your local filesystem, MCP servers, tools, and project config stay
+available — the web/mobile interface is just a window into the local session.
+
+### Usage
+
+```bash
+claude remote-control              # Start new remote session
+claude remote-control --name "My Project"  # With custom title
+```
+
+From within a session: `/remote-control` (or `/rc`).
+
+Press spacebar for QR code. Connect via session URL, QR scan, or find by name at
+claude.ai/code. Use `/mobile` for app download QR code.
+
+### Key Details
+
+- **Auto-enable**: `/config` → "Enable Remote Control for all sessions"
+- **Security**: outbound HTTPS only, no inbound ports, all traffic via Anthropic API over TLS
+- **One session per instance**. Terminal must stay open.
+- **vs Claude Code on the Web**: Remote Control = your machine. Web = Anthropic cloud.
+
+---
+
+## Claude Code on the Web
+
+**Status:** Research preview | **URL:** claude.ai/code
+**Access:** Pro, Max, Team, Enterprise | **Also on:** Claude iOS and Android apps
+
+Run Claude Code sessions on Anthropic-managed cloud infrastructure from a browser
+or mobile app. No local setup needed.
+
+### Key Commands
+
+```bash
+claude --remote "Fix the auth bug"     # Start web session from terminal
+claude --remote "Fix test" &           # Run multiple in parallel
+claude --teleport                       # Pull web session into terminal
+/teleport                              # Same, from within Claude Code (or /tp)
+/tasks                                 # Monitor + teleport (press t)
+/remote-env                            # Select default cloud environment
+```
+
+### Features
+
+- **Diff view**: review changes file by file before creating PR
+- **Parallel execution**: each `--remote` creates independent session
+- **Session sharing**: Team visibility (Enterprise/Teams) or Public (Max/Pro)
+- **Cloud environment**: Ubuntu 24.04, Python, Node.js, Ruby, Go, Rust, Java, C++, PostgreSQL 16, Redis 7
+- **Setup scripts**: Bash scripts that run before Claude Code launches (configure in environment UI)
+- **Network**: Limited (default, allowlisted domains), No internet, or Full access
+
+Session handoff is one-way: web → terminal only (via `/teleport`).
+
+---
+
+## Slack Integration
+
+**Status:** GA | **Access:** Pro, Max, Teams, Enterprise with Claude Code access
+
+Mention `@Claude` with a coding task in Slack → Claude creates a Claude Code web
+session automatically. Built on the Claude for Slack app with intelligent routing.
+
+### Setup
+
+1. Install Claude app from Slack App Marketplace (admin)
+2. Connect Claude account via App Home
+3. Configure Claude Code on the web (connect GitHub)
+4. Set routing mode: **Code only** or **Code + Chat**
+5. Add to channels: `/invite @Claude`
+
+### How It Works
+
+- Detects coding intent from @mentions in channels (not DMs)
+- Creates session on claude.ai/code, posts progress updates to Slack thread
+- Completion: summary + "View Session" / "Create PR" buttons
+- Gathers context from thread messages and recent channel messages
+
+### Key Details
+
+- Per-user: sessions run under individual accounts, against individual rate limits
+- Channel-based access control (invite required)
+- GitHub only, one PR per session
 
 ---
 
@@ -227,7 +344,9 @@ Use `--chrome` flag per-session to avoid this if not always needed.
 | `claude auth login` | Log in (supports `--email`, `--sso`) |
 | `claude auth logout` | Log out |
 | `claude auth status` | Show authentication status |
-| `claude remote-control` | Remote control mode |
+| `claude remote-control` | Start remote control session |
+| `claude --remote "task"` | Start web session from terminal |
+| `claude --teleport` | Pull web session into terminal |
 
 ### Key Flags
 
@@ -298,20 +417,23 @@ Returns validated JSON matching the provided schema after the agent completes.
 ### VS Code Extension
 
 Claude Code works as a VS Code extension with full access to the same tools, agent
-loop, and capabilities as the CLI.
+loop, and capabilities as the CLI. Chrome browser automation supported directly
+from VS Code. Terminal integration for bash commands. File operations through
+VS Code's workspace.
 
-- Chrome browser automation supported directly from VS Code
-- Terminal integration for bash commands
-- File operations through VS Code's workspace
+### JetBrains Plugin
 
-### JetBrains Plugin (Beta)
+Available as a JetBrains plugin for IntelliJ IDEA, PyCharm, WebStorm, GoLand,
+and other JetBrains IDEs. Full feature parity with CLI and VS Code extension.
 
-Available as a JetBrains plugin for IntelliJ, PyCharm, WebStorm, and other
-JetBrains IDEs.
+### Claude Desktop App
+
+Standalone desktop application (separate from Claude Desktop the chat app).
+Provides the same Claude Code experience without requiring a terminal or IDE.
 
 ### Extension Parity
 
-All Claude Code extension types (CLI, VS Code, JetBrains) share the same core:
+All Claude Code surfaces (CLI, VS Code, JetBrains, Desktop app) share the same core:
 
 - Same agentic loop and model access
 - Same built-in tools (Bash, Read, Write, Edit, Glob, Grep, etc.)

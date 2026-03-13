@@ -4,7 +4,7 @@ Per-model capability matrix, pricing, limits, and migration guidance.
 Consult when choosing between models, planning migrations, or understanding
 model-specific behaviour.
 
-**Last updated:** 2026-03-09
+**Last updated:** 2026-03-13
 
 ## Table of Contents
 
@@ -25,13 +25,21 @@ model-specific behaviour.
 
 ## Model Overview
 
-| Model | Release | Positioning | Status |
-|-------|---------|-------------|--------|
-| Claude Opus 4.6 | 2026-02 | Flagship. Highest capability, adaptive thinking, 128K output | **Current** |
-| Claude Sonnet 4.6 | 2026-02 | Balanced. Speed + intelligence, adaptive thinking, 64K output | **Current** |
-| Claude Haiku 4.5 | 2025-10 | Fast. Low latency, cost-efficient, extended thinking | **Current** |
-| Claude Sonnet 4.5 | 2025-09 | Previous balanced model. Interleaved thinking, strong coding | Legacy |
-| Claude Opus 4.5 | 2025-11 | Previous flagship. Extended thinking, 32K output | Legacy |
+| Model | Release | Positioning | Training Cutoff | Status |
+|-------|---------|-------------|-----------------|--------|
+| Claude Opus 4.6 | 2026-02 | Flagship. Highest capability, adaptive thinking, 128K output | Aug 2025 | **Current** |
+| Claude Sonnet 4.6 | 2026-02 | Balanced. Speed + intelligence, adaptive thinking, 64K output | Jan 2026 | **Current** |
+| Claude Haiku 4.5 | 2025-10 | Fast. Low latency, cost-efficient, extended thinking | Jul 2025 | **Current** |
+| Claude Sonnet 4.5 | 2025-09 | Previous balanced model. Interleaved thinking, strong coding | -- | Legacy |
+| Claude Opus 4.5 | 2025-11 | Previous flagship. Extended thinking, 32K output | -- | Legacy |
+
+### Knowledge Cutoff Dates
+
+| Model | Reliable Knowledge Through | Training Data Through |
+|-------|---------------------------|----------------------|
+| Opus 4.6 | May 2025 | Aug 2025 |
+| Sonnet 4.6 | Aug 2025 | Jan 2026 |
+| Haiku 4.5 | Feb 2025 | Jul 2025 |
 
 ---
 

@@ -1,4 +1,4 @@
-# Claude Capabilities Quick Reference (v2.3.0, 2026-03-10)
+# Claude Capabilities Quick Reference (v2.4.0, 2026-03-13)
 
 Use this knowledge to give accurate, current answers about what Claude can do.
 For deeper detail on any topic, invoke the assistant-capabilities skill.
@@ -21,6 +21,10 @@ For deeper detail on any topic, invoke the assistant-capabilities skill.
 **Control**: Computer Use — mouse, keyboard, screenshots (beta, `computer_20251124`)
 **Connect**: MCP servers/connectors, Files API (500MB/file), Tool Search (1000s of tools)
 **Reason**: Adaptive thinking, effort control (low/medium/high), 128K output streaming
+**Review**: Code Review — managed PR review service ($15-25/review, Teams/Enterprise)
+**Remote**: Remote Control — continue local sessions from phone/browser (all plans)
+**Cloud**: claude.ai/code — web sessions on Anthropic cloud, `--remote` from CLI, `/teleport` back
+**Integrate**: Slack (@Claude → auto Claude Code sessions), Chrome browser automation
 
 ## How Capabilities Compose
 
@@ -61,9 +65,14 @@ Skill vs CLAUDE.md: CLAUDE.md = "always know this". Skill = "know when relevant"
 | Code execution | -- | -- | Yes | -- | Tool |
 | Background tasks | -- | -- | Yes | -- | -- |
 | Memory (cross-conv.) | Projects | Projects | CLAUDE.md | -- | Memory tool |
+| Code Review | -- | -- | Managed | -- | -- |
+| Remote Control | View/steer | -- | Host | -- | -- |
+| Web sessions | claude.ai/code | -- | `--remote` | -- | -- |
+| Slack integration | -- | -- | Via web | -- | -- |
 
 Claude.ai/Desktop cannot run code, access filesystems, or orchestrate multi-step workflows.
 For agent workflows, use Claude Code or build with the Agent SDK (Python/TypeScript).
+Claude Code on the web (claude.ai/code) runs in Anthropic cloud — no local setup needed.
 
 ## Key API Parameters
 
