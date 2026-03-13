@@ -88,7 +88,7 @@ In Claude Code / Agent SDK, use short names: `opus`, `sonnet`, `haiku`
 Pricing tiers (most to least expensive): Opus > Sonnet > Haiku.
 
 For current per-MTok rates, cached input pricing, and tier details:
-https://docs.anthropic.com/en/docs/about-claude/models/all-models
+https://platform.claude.com/docs/en/about-claude/models/all-models
 
 **Pricing multipliers** (stable, useful for architecture decisions):
 - 1M context (beyond 200K): ~2x input, ~1.5x output

@@ -623,8 +623,8 @@ API access is tiered (1-4) based on usage history and payment. Higher tiers
 unlock higher rate limits and features (e.g., 1M context requires tier 3+).
 
 For current tier thresholds, per-model rate limits, and your current tier:
-- https://console.anthropic.com (account dashboard)
-- https://docs.anthropic.com/en/docs/about-claude/models/rate-limits
+- https://platform.claude.com (account dashboard)
+- https://platform.claude.com/docs/en/api/rate-limits
 
 ### Rate Limit Headers
 Every response includes rate limit information:

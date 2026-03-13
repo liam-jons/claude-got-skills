@@ -14,7 +14,7 @@
     {
       "name": "codebase-review",
       "description": "Full codebase quality review with parallel analysis agents, deterministic tooling, adversarial verification, and structured reporting.",
-      "version": "1.0.0",
+      "version": "1.2.0",
       "source": "./plugins/codebase-review"
     }
   ],
