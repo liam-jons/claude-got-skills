@@ -314,7 +314,7 @@ extract_thinking() {
 
   local thinking_text=""
   local snapshot
-  snapshot=$(ab snapshot -i 2>/dev/null || echo "")
+  snapshot=$(ab snapshot 2>/dev/null || echo "")
 
   # Strategy 1: Find the thinking toggle via the "status:" line in the
   # accessibility snapshot. The status element only appears for thinking summaries.
@@ -322,6 +322,9 @@ extract_thinking() {
   local thinking_summary=""
 
   if [[ -n "$snapshot" ]]; then
+    # Save thinking snapshot for debugging
+    echo "$snapshot" > "$RESULTS_DIR/last_thinking_snapshot.txt" 2>/dev/null || true
+
     # The status line sits right after the thinking button.
     # Find the button ref from the line immediately before "- status:".
     thinking_ref=$(echo "$snapshot" | grep -B1 '^\s*- status:' | grep 'button' | grep -oE 'ref=e[0-9]+' | head -1 | sed 's/ref=//' || echo "")
@@ -493,9 +496,9 @@ run_prompt() {
   local thinking_text
   thinking_text=$(extract_thinking)
 
-  # Take screenshot
+  # Take screenshot (10s timeout — screenshots hang on some pages)
   log "  Taking screenshot..."
-  ab screenshot "$screenshot_path" 2>/dev/null || log_warn "  Screenshot failed"
+  timeout 10 ab screenshot "$screenshot_path" 2>/dev/null || log_warn "  Screenshot failed (timeout or error)"
 
   # Check for "Continue generating" button
   local snapshot_after
