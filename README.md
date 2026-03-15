@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-plugins-blueviolet)]()
-[![GitHub last commit](https://img.shields.io/github/last-commit/claude-got-skills/skills)]()
+[![GitHub last commit](https://img.shields.io/github/last-commit/claude-got-skills/claude-got-skills)]()
 
 Plugins and skills for Claude Code that extend what Claude can do — from
 keeping its knowledge current to running full codebase quality reviews.
@@ -10,7 +10,7 @@ keeping its knowledge current to running full codebase quality reviews.
 ## Quick install
 
 ```
-/plugin marketplace add claude-got-skills/skills
+/plugin marketplace add claude-got-skills/claude-got-skills
 ```
 
 Then install whichever plugins you need:
@@ -23,7 +23,7 @@ Then install whichever plugins you need:
 Skills can also be installed standalone via [skills.sh](https://skills.sh):
 
 ```bash
-npx skills add claude-got-skills/skills@assistant-capabilities
+npx skills add claude-got-skills/claude-got-skills@assistant-capabilities
 ```
 
 ---

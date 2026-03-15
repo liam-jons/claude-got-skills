@@ -42,14 +42,14 @@ passes with different partition strategies.
 ### From the claude-got-skills marketplace
 
 ```
-/plugin marketplace add claude-got-skills/skills
+/plugin marketplace add claude-got-skills/claude-got-skills
 /plugin install claude-got-skills@codebase-review
 ```
 
 ### From a local clone
 
 ```bash
-git clone https://github.com/claude-got-skills/skills.git
+git clone https://github.com/claude-got-skills/claude-got-skills.git
 cd skills
 # The plugin is at plugins/codebase-review/
 ```

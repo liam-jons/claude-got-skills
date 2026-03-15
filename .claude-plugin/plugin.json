@@ -5,8 +5,8 @@
   "author": {
     "name": "claude-got-skills"
   },
-  "homepage": "https://github.com/claude-got-skills/skills",
-  "repository": "https://github.com/claude-got-skills/skills",
+  "homepage": "https://github.com/claude-got-skills/claude-got-skills",
+  "repository": "https://github.com/claude-got-skills/claude-got-skills",
   "license": "MIT",
   "keywords": ["capabilities", "models", "api", "platform", "skills", "code-review", "codebase-audit", "static-analysis", "multi-agent", "developer-tools"]
 }
