@@ -50,7 +50,7 @@ passes with different partition strategies.
 
 ```bash
 git clone https://github.com/liam-jons/claude-got-skills.git
-cd skills
+cd claude-got-skills
 # The plugin is at plugins/codebase-review/
 ```
 

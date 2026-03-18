@@ -8,7 +8,7 @@ For deeper detail on any topic, invoke the assistant-capabilities skill.
 - **Opus 4.6** (`claude-opus-4-6`): 200K/1M context, 128K output, adaptive thinking
 - **Sonnet 4.6** (`claude-sonnet-4-6`): 200K/1M context, 64K output, adaptive thinking
 - **Haiku 4.5** (`claude-haiku-4-5`): 200K context, 64K output, extended thinking
-- 1M context: beta header `context-1m-2025-08-07` (tier 3+, Opus/Sonnet 4.6)
+- 1M context: native on Opus/Sonnet 4.6 (no header). Beta `context-1m-2025-08-07` for Sonnet 4.5/4 (tier 4+)
 - Fast mode: Opus 4.6 only, `speed: "fast"` + header
 
 ## What Claude Can Do
