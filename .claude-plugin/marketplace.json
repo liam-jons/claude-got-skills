@@ -3,8 +3,8 @@
   "name": "claude-got-skills",
   "description": "Claude Code plugins and skills — capabilities awareness, multi-agent codebase review, and more.",
   "owner": {
-    "name": "claude-got-skills",
-    "email": "claude-got-skills@users.noreply.github.com"
+    "name": "liam-jons",
+    "email": "liam-jons@users.noreply.github.com"
   },
   "plugins": [
     {
@@ -16,7 +16,7 @@
         "name": "Liam Jons"
       },
       "category": "productivity",
-      "homepage": "https://github.com/claude-got-skills/claude-got-skills"
+      "homepage": "https://github.com/liam-jons/claude-got-skills"
     },
     {
       "name": "codebase-review",
@@ -27,7 +27,7 @@
         "name": "Liam Jons"
       },
       "category": "development",
-      "homepage": "https://github.com/claude-got-skills/claude-got-skills"
+      "homepage": "https://github.com/liam-jons/claude-got-skills"
     }
   ]
 }
