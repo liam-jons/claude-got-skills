@@ -1,10 +1,10 @@
 # Model Specifics Reference
 
-Per-model capability matrix, pricing, limits, and migration guidance.
+Per-model capability matrix, limits, and migration guidance.
 Consult when choosing between models, planning migrations, or understanding
 model-specific behaviour.
 
-**Last updated:** 2026-03-13
+**Last updated:** 2026-03-18
 
 ## Table of Contents
 
@@ -47,13 +47,14 @@ model-specific behaviour.
 
 | Capability | Opus 4.6 | Sonnet 4.6 | Haiku 4.5 | Sonnet 4.5 (legacy) | Opus 4.5 (legacy) |
 |------------|----------|------------|-----------|---------------------|-------------------|
-| Context window | 200K (1M beta) | 200K (1M beta) | 200K | 200K (1M beta) | 200K (1M beta) |
+| Context window | 1M (native) | 1M (native) | 200K | 200K (1M beta) | 200K (1M beta) |
 | Context awareness | No | Yes | Yes | Yes | No |
 | Max output tokens | 128K | 64K | 64K | 64K | 32K |
 | Extended thinking | Yes (adaptive) | Yes (adaptive) | Yes (budget) | Yes (budget) | Yes (budget) |
 | Interleaved thinking | Yes (auto) | Yes (auto) | No | Yes (auto) | No |
 | Adaptive thinking | Yes | Yes | No | No | No |
 | Effort: low/med/high | Yes | Yes | Yes | Yes | Yes |
+| Effort: max | Yes | No | No | No | No |
 | Structured outputs | Yes | Yes | Yes | Yes | Yes |
 | Computer use | Yes (v20251124) | Yes (v20251124) | Yes (v20250124) | Yes (v20250124) | Yes (v20251124) |
 | Tool search (GA) | Yes | Yes | No | Yes | Yes |
@@ -65,6 +66,7 @@ model-specific behaviour.
 | Batch processing | Yes | Yes | Yes | Yes | Yes |
 | Prompt caching | Yes | Yes | Yes | Yes | Yes |
 | Data residency (ZDR) | Yes | No | No | No | No |
+| Fast mode (research preview) | Yes | No | No | No | No |
 
 ---
 
@@ -78,6 +80,14 @@ model-specific behaviour.
 | Sonnet 4.5 (legacy) | `claude-sonnet-4-5-20250929` | Alias: `claude-sonnet-4-5` |
 | Opus 4.5 (legacy) | `claude-opus-4-5-20251101` | Alias: `claude-opus-4-5` |
 
+### Platform-Specific IDs
+
+| Model | AWS Bedrock | GCP Vertex AI |
+|-------|-------------|---------------|
+| Opus 4.6 | `anthropic.claude-opus-4-6-v1` | `claude-opus-4-6` |
+| Sonnet 4.6 | `anthropic.claude-sonnet-4-6` | `claude-sonnet-4-6` |
+| Haiku 4.5 | `anthropic.claude-haiku-4-5-20251001-v1:0` | `claude-haiku-4-5@20251001` |
+
 In Claude Code / Agent SDK, use short names: `opus`, `sonnet`, `haiku`
 (resolves to latest version of each tier).
 
@@ -85,32 +95,49 @@ In Claude Code / Agent SDK, use short names: `opus`, `sonnet`, `haiku`
 
 ## Pricing
 
-Pricing tiers (most to least expensive): Opus > Sonnet > Haiku.
+For current per-MTok rates, cached input pricing, batch discounts, and
+tier details, see the official pricing documentation:
+https://platform.claude.com/docs/en/about-claude/pricing
 
-For current per-MTok rates, cached input pricing, and tier details:
-https://platform.claude.com/docs/en/about-claude/models/all-models
+**Relative cost ranking** (most to least expensive): Opus > Sonnet > Haiku.
 
-**Pricing multipliers** (stable, useful for architecture decisions):
-- 1M context (beyond 200K): ~2x input, ~1.5x output
-- Data residency (US-only): ~1.1x multiplier
-- Batch processing: 50% discount
+**Pricing multipliers and discounts** (stable, useful for architecture decisions):
+
+- Batch processing: 50% discount on all models
 - Prompt caching reads: ~10% of base input price
-- Prompt caching writes: ~25% premium on base input price
-- Fast mode (Opus 4.6): 6x standard rates
+- Prompt caching writes (5-min TTL): ~25% premium on base input price
+- Prompt caching writes (1-hr TTL): ~100% premium on base input price
+- Data residency, US-only (Opus 4.6+): ~1.1x multiplier on all token categories
+- Fast mode (Opus 4.6, research preview): 6x standard rates
+- Long context premium (Sonnet 4.5 and older only): ~2x input, ~1.5x output beyond 200K tokens
+- Regional endpoints on 3P platforms (Bedrock/Vertex): ~10% premium over global
+
+**Key cost facts:**
+- Opus 4.6 and Sonnet 4.6 include 1M context at standard pricing (no long-context premium)
+- Code execution is free when used with web search or web fetch tools
+- Fast mode pricing stacks with caching and data residency but is not available with Batch API
+- Caching pays off after one read (5-min TTL) or two reads (1-hr TTL)
 
 ---
 
 ## Context Window Details
 
-All models share the same base context architecture:
+### Native Context by Model
 
-| Aspect | Value |
-|--------|-------|
-| Base context | 200,000 tokens |
-| Beta context | 1,000,000 tokens |
-| Beta header | `context-1m-2025-08-07` |
-| Tier requirement | Usage tier 3+ |
-| Premium pricing trigger | Tokens beyond 200K |
+| Model | Native Context | 1M Access |
+|-------|---------------|-----------|
+| Opus 4.6 | 1,000,000 tokens | Native (no header needed) |
+| Sonnet 4.6 | 1,000,000 tokens | Native (no header needed) |
+| Haiku 4.5 | 200,000 tokens | Not available |
+| Sonnet 4.5 (legacy) | 200,000 tokens | Beta header `context-1m-2025-08-07`, tier 4+ |
+| Opus 4.5 (legacy) | 200,000 tokens | Beta header `context-1m-2025-08-07`, tier 3+ |
+
+Opus 4.6 and Sonnet 4.6 use 1M natively with no beta header and no
+premium pricing. For older models, requests exceeding 200K tokens via
+the beta header incur premium rates (~2x input, ~1.5x output).
+
+A single request can include up to 600 images or PDF pages (100 for
+models with a 200K-token context window).
 
 ### Thinking and Context
 
@@ -124,7 +151,15 @@ Effective context: `context_window = (input_tokens - previous_thinking_tokens) +
 
 These models receive `<budget:token_budget>` in the system prompt and
 `<system_warning>Token usage: X/Y; Z remaining</system_warning>` after tool
-calls. This helps the model manage its own context budget.
+calls. This helps the model manage its own context budget. Opus 4.6 does
+not have context awareness.
+
+### Compaction (Beta)
+
+Server-side context compaction is available for Opus 4.6 and Sonnet 4.6.
+Compaction automatically summarises earlier parts of a conversation when
+context approaches the window limit, enabling effectively infinite
+conversations. See `references/api-features.md` for configuration details.
 
 ---
 
@@ -139,7 +174,8 @@ calls. This helps the model manage its own context budget.
 | Opus 4.5 (legacy) | 32,000 | — |
 
 Set via `max_tokens` parameter. For Opus 4.6 with values above ~16K,
-streaming is recommended to avoid timeouts.
+streaming is recommended to avoid timeouts. Use `.stream()` with
+`.get_final_message()` if you don't need incremental event processing.
 
 ---
 
@@ -152,6 +188,16 @@ streaming is recommended to avoid timeouts.
 | Haiku 4.5 | Extended | `thinking: {type: "enabled", budget_tokens: N}` (no interleaving) |
 | Sonnet 4.5 (legacy) | Extended + interleaved | `thinking: {type: "enabled", budget_tokens: N}` |
 | Opus 4.5 (legacy) | Extended | `thinking: {type: "enabled", budget_tokens: N}` (no interleaving) |
+
+**Effort levels:** Control thinking depth via the `effort` parameter.
+All models support `low`, `medium`, `high`. Opus 4.6 additionally supports
+`max` for absolute highest capability. At default effort (`high`), Claude
+almost always thinks. At lower effort, it may skip thinking for simpler
+problems.
+
+**Sonnet 4.6 note:** Supports both adaptive thinking and manual extended
+thinking with the `interleaved-thinking-2025-05-14` beta header. You can
+use either approach.
 
 See `references/api-features.md` for code examples and migration guidance.
 
@@ -171,12 +217,14 @@ available actions, coordinate scaling, and security requirements.
 
 | Feature | Header | Opus 4.6 | Sonnet 4.6 | Haiku 4.5 | Sonnet 4.5 | Opus 4.5 |
 |---------|--------|----------|------------|-----------|------------|----------|
-| 1M context | `context-1m-2025-08-07` | Yes | Yes | Yes | Yes | Yes |
+| 1M context | Native (no header) | Yes | Yes | No | No | No |
+| 1M context (beta) | `context-1m-2025-08-07` | — | — | No | Yes | Yes |
 | Files API | `files-api-2025-04-14` | Yes | Yes | Yes | Yes | Yes |
 | MCP connector | `mcp-client-2025-11-20` | Yes | Yes | Yes | Yes | Yes |
 | Computer use | Model-specific | Yes | Yes | Yes | Yes | Yes |
 | Skills | `skills-2025-10-02` | Yes | Yes | Yes | Yes | Yes |
-| Compaction | Beta | Yes | Yes | Yes | Yes | Yes |
+| Compaction | Beta | Yes | Yes | No | No | No |
+| Fast mode | `fast-mode-2026-02-01` | Yes | No | No | No | No |
 
 ### GA Features (No Header Required)
 
@@ -190,6 +238,10 @@ fine-grained tool streaming.
 `code_execution_20260120`. Web search and web fetch are no longer restricted
 to specific models — available on all models that support programmatic
 tool calling.
+
+**Dynamic filtering:** Available on Opus 4.6 and Sonnet 4.6 only. Requires
+`web_search_20260209` or `web_fetch_20260209` tool versions. Claude writes
+and executes code to filter results before they enter the context window.
 
 **Structured outputs schema limits:** Subject to schema complexity limits
 (max nesting depth, max properties, max enum values). See API docs for
@@ -211,7 +263,9 @@ response format, or add format instructions to the system prompt.
 
 ### 2. budget_tokens Deprecated
 
-`thinking: {type: "enabled", budget_tokens: N}` is deprecated on Opus 4.6.
+`thinking: {type: "enabled", budget_tokens: N}` is deprecated on Opus 4.6
+and Sonnet 4.6. It remains functional but will be removed in a future
+model release.
 
 **Migration:** Use `thinking: {type: "adaptive"}` and control via `effort`
 parameter. For fine-grained control, adaptive thinking dynamically allocates
@@ -226,11 +280,13 @@ instead.
 
 ### 4. Interleaved Thinking Header Deprecated
 
-`interleaved-thinking-2025-05-14` beta header is deprecated.
+`interleaved-thinking-2025-05-14` beta header is deprecated on Opus 4.6.
+It is safely ignored if included.
 
 **Migration:** Adaptive thinking on Opus 4.6 enables interleaving
-automatically. On Sonnet 4.5, interleaving is also automatic with standard
-`thinking: {type: "enabled", budget_tokens: N}`.
+automatically. On Sonnet 4.6, you can use either adaptive thinking or
+the beta header with manual extended thinking. On Sonnet 4.5, interleaving
+is also automatic with standard `thinking: {type: "enabled", budget_tokens: N}`.
 
 ### 5. Tool Parameter Quoting
 
@@ -255,25 +311,29 @@ tool parameter extraction. Well-formed JSON parsers handle all valid escaping.
    `computer-use-2025-11-24` (if migrating from Opus 4.5 `computer_20250124`)
 6. Test JSON parsing for tool parameters (quoting changes)
 7. Increase `max_tokens` ceiling — now supports up to 128K
+8. Remove `context-1m-2025-08-07` beta header — 1M is native on Opus 4.6
+9. Consider using `effort: "max"` for highest capability tasks
 
 ### From Sonnet 4.5 to Sonnet 4.6
 
 1. Replace `thinking: {type: "enabled", budget_tokens: N}` with
-   `thinking: {type: "adaptive"}`
+   `thinking: {type: "adaptive"}` (or keep manual extended thinking
+   with the interleaved-thinking beta header — both work)
 2. Programmatic tool calling now GA — no beta header required
 3. Context awareness still present on Sonnet 4.6 (unlike Opus 4.6)
-4. Same pricing as Sonnet 4.5 ($3/$15)
+4. Remove `context-1m-2025-08-07` beta header — 1M is native on Sonnet 4.6
 5. Dynamic filtering now available for web search/fetch
 6. Computer use upgraded to `computer_20251124` (includes zoom action)
-7. Effort parameter supported (first Sonnet to support `effort`)
+7. Effort parameter now supported (first Sonnet to support `effort`)
+8. Consider `effort: "medium"` as default for balanced speed/cost/quality
 
 ### From Sonnet 4.5 to Opus 4.6
 
 All Opus 4.5 migration steps above, plus:
-1. Effort parameter simplified to low/medium/high (`max` removed in v2.1.72)
+1. Effort parameter includes `max` level (Opus 4.6 exclusive)
 2. Programmatic tool calling now GA on Opus 4.6 — no header required
 3. Context awareness system warnings not present on Opus 4.6
-4. Budget may increase significantly (~1.7x input cost vs Sonnet 4.5)
+4. Budget will increase significantly (Opus tier pricing vs Sonnet tier)
 
 ---
 
@@ -289,15 +349,18 @@ All Opus 4.5 migration steps above, plus:
 | Web research with filtering | Sonnet 4.6 | Dynamic filtering + free code execution |
 | Document generation | Sonnet 4.6 | Good balance for skills-based work |
 | Subagent tasks | Haiku 4.5 | Cost-effective for delegated analysis |
-| Maximum quality | Opus 4.6 (effort: high) | Highest capability + maximum effort |
+| Maximum quality | Opus 4.6 (effort: max) | Highest capability + maximum effort level |
+| Latency-sensitive Opus tasks | Opus 4.6 (fast mode) | Up to 2.5x faster output generation |
 
 ### Cost Optimisation Patterns
 
 - Use prompt caching for repeated system prompts and tool definitions
 - Use Haiku for subagents and analysis tasks
 - Use batch processing for non-time-sensitive workloads (50% savings)
-- Avoid 1M context unless necessary (premium pricing beyond 200K)
+- Opus 4.6 and Sonnet 4.6 include 1M context at standard pricing — no long-context premium
+- For older models, avoid 1M context unless necessary (premium pricing beyond 200K)
 - Use `effort: "low"` for simple tasks, `effort: "high"` for complex ones
+- Code execution is free when combined with web search or web fetch
 
 ---
 
@@ -310,3 +373,4 @@ All Opus 4.5 migration steps above, plus:
 | "Claude can run any language" | Code execution supports Python + common libraries. For other languages, use Bash tool or external containers |
 | "Claude remembers by default" | No default cross-conversation memory. Enable via Memory tool (GA) with client-side storage |
 | "Claude has internet access" | Not by default. Enable via Web Search/Fetch tools or MCP servers |
+| "1M context needs a beta header" | Only for Sonnet 4.5 and older. Opus 4.6 and Sonnet 4.6 have 1M natively |

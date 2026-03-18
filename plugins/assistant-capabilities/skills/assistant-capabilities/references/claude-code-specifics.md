@@ -5,7 +5,7 @@ integration, agent teams, browser integration, CLI reference, IDE extensions,
 skills system, and plugin development. These capabilities are distinct from
 API-level features and only apply in Claude Code contexts.
 
-**Last updated:** 2026-03-13
+**Last updated:** 2026-03-18
 **Covers through:** v2.1.74
 
 ## Table of Contents
@@ -17,6 +17,7 @@ API-level features and only apply in Claude Code contexts.
 - [Background Tasks & Scheduling](#background-tasks--scheduling)
 - [Agent Teams](#agent-teams)
 - [Browser Integration](#browser-integration)
+- [Claude Code Desktop App](#claude-code-desktop-app)
 - [CLI Reference](#cli-reference)
 - [IDE Extensions](#ide-extensions)
 - [Skills System](#skills-system)
@@ -37,10 +38,11 @@ broken edge cases, and regressions. Findings posted as inline comments.
 
 - **Severity levels**: Normal (bug, fix before merge), Nit (minor), Pre-existing (not from this PR)
 - **Triggers**: Once after PR creation, after every push, or manual (`@claude review`)
-- **Customization**: `CLAUDE.md` (shared rules) + `REVIEW.md` (review-only guidance at repo root)
-- **Pricing**: $15-25 average per review, billed separately through extra usage
-- **Setup**: claude.ai/admin-settings/claude-code → install Claude GitHub App → select repos
-- **Analytics**: claude.ai/analytics/code-review (PRs reviewed, weekly cost, auto-resolved feedback)
+- **Manual trigger**: Comment `@claude review` as a top-level PR comment (not inline) to start a review and opt that PR into push-triggered reviews going forward. Works in any trigger mode. Requires owner/member/collaborator access; PR must be open and not draft.
+- **Customization**: `CLAUDE.md` (shared rules — violations flagged as nits, bidirectional: outdated docs flagged too) + `REVIEW.md` (review-only guidance at repo root, auto-discovered)
+- **Pricing**: Billed based on token usage, scaling with PR size and complexity. Billed separately through extra usage. Spend cap configurable at claude.ai/admin-settings/usage.
+- **Setup**: claude.ai/admin-settings/claude-code → install Claude GitHub App → select repos → set review behavior per repo
+- **Analytics**: claude.ai/analytics/code-review (PRs reviewed, weekly cost, auto-resolved feedback, per-repo breakdown)
 
 For self-hosted reviews, use GitHub Actions or GitLab CI/CD instead.
 
@@ -48,7 +50,7 @@ For self-hosted reviews, use GitHub Actions or GitLab CI/CD instead.
 
 ## Remote Control
 
-**Status:** GA | **Access:** All plans (Pro, Max, Team, Enterprise)
+**Status:** GA | **Access:** All plans (Pro, Max, Team, Enterprise). Team/Enterprise admins must enable the toggle in admin settings first (off by default; depends on Claude Code on the web toggle).
 
 Connect claude.ai/code or the Claude mobile app (iOS/Android) to a local Claude
 Code session. Your local filesystem, MCP servers, tools, and project config stay
@@ -56,9 +58,17 @@ available — the web/mobile interface is just a window into the local session.
 
 ### Usage
 
+**Server mode** (dedicated remote server):
 ```bash
-claude remote-control              # Start new remote session
+claude remote-control              # Start server mode
 claude remote-control --name "My Project"  # With custom title
+```
+
+**Interactive session with remote control**:
+```bash
+claude --remote-control            # Full interactive + remote access
+claude --rc                        # Short alias
+claude --rc "My Project"           # With name
 ```
 
 From within a session: `/remote-control` (or `/rc`).
@@ -66,11 +76,22 @@ From within a session: `/remote-control` (or `/rc`).
 Press spacebar for QR code. Connect via session URL, QR scan, or find by name at
 claude.ai/code. Use `/mobile` for app download QR code.
 
+### Server Mode Flags
+
+| Flag | Description |
+|------|-------------|
+| `--name "title"` | Custom session title visible at claude.ai/code |
+| `--spawn <mode>` | How concurrent sessions are created. `same-dir` (default): shared working directory. `worktree`: each session gets its own git worktree. Press `w` at runtime to toggle. |
+| `--capacity <N>` | Maximum concurrent sessions. Default 32. |
+| `--verbose` | Detailed connection and session logs |
+| `--sandbox` / `--no-sandbox` | Enable or disable filesystem/network sandboxing (off by default) |
+
 ### Key Details
 
 - **Auto-enable**: `/config` → "Enable Remote Control for all sessions"
-- **Security**: outbound HTTPS only, no inbound ports, all traffic via Anthropic API over TLS
-- **One session per instance**. Terminal must stay open.
+- **Security**: outbound HTTPS only, no inbound ports, all traffic via Anthropic API over TLS, multiple short-lived scoped credentials
+- **One session per interactive process**. Use server mode with `--spawn` for multiple concurrent sessions from a single process.
+- **Terminal must stay open** — closing the terminal or stopping the process ends the session
 - **vs Claude Code on the Web**: Remote Control = your machine. Web = Anthropic cloud.
 
 ---
@@ -99,9 +120,10 @@ claude --teleport                       # Pull web session into terminal
 - **Diff view**: review changes file by file before creating PR
 - **Parallel execution**: each `--remote` creates independent session
 - **Session sharing**: Team visibility (Enterprise/Teams) or Public (Max/Pro)
-- **Cloud environment**: Ubuntu 24.04, Python, Node.js, Ruby, Go, Rust, Java, C++, PostgreSQL 16, Redis 7
-- **Setup scripts**: Bash scripts that run before Claude Code launches (configure in environment UI)
-- **Network**: Limited (default, allowlisted domains), No internet, or Full access
+- **Session management**: archive sessions to declutter, delete permanently (from archived list or session menu)
+- **Cloud environment**: Ubuntu 24.04, Python, Node.js, Ruby, Go, Rust, Java, C++, PHP 8.4, PostgreSQL 16, Redis 7
+- **Setup scripts**: Bash scripts that run before Claude Code launches (configure in environment UI). Run only on new sessions, skipped on resume.
+- **Network**: Limited (default, allowlisted domains), No internet, or Full access. All traffic passes through security proxy.
 
 Session handoff is one-way: web → terminal only (via `/teleport`).
 
@@ -119,14 +141,15 @@ session automatically. Built on the Claude for Slack app with intelligent routin
 1. Install Claude app from Slack App Marketplace (admin)
 2. Connect Claude account via App Home
 3. Configure Claude Code on the web (connect GitHub)
-4. Set routing mode: **Code only** or **Code + Chat**
+4. Set routing mode: **Code only** or **Code + Chat** (includes "Retry as Code"/"Retry as Chat" buttons if routing is wrong)
 5. Add to channels: `/invite @Claude`
 
 ### How It Works
 
 - Detects coding intent from @mentions in channels (not DMs)
+- **Channels only**: works in public and private channels, does NOT work in DMs
 - Creates session on claude.ai/code, posts progress updates to Slack thread
-- Completion: summary + "View Session" / "Create PR" buttons
+- Completion: summary + "View Session" / "Create PR" / "Change Repo" buttons
 - Gathers context from thread messages and recent channel messages
 
 ### Key Details
@@ -134,6 +157,7 @@ session automatically. Built on the Claude for Slack app with intelligent routin
 - Per-user: sessions run under individual accounts, against individual rate limits
 - Channel-based access control (invite required)
 - GitHub only, one PR per session
+- Web access required: users without Claude Code on the web access get standard chat responses only
 
 ---
 
@@ -155,12 +179,14 @@ Run any bash command or agent in the background:
 
 **Keyboard shortcuts:**
 - `Ctrl+B` — background a running bash command or agent
-- `Ctrl+F` — kill a background agent (two-press confirmation)
+- `Ctrl+F` — kill all background agents (two-press confirmation within 3 seconds)
 - `/tasks` — view and manage all background tasks
+- `Ctrl+T` — toggle task list in terminal status area
 
 Background task output is truncated to 30K characters with a file path
 reference to the full output. Task completion notifications are capped at
-3 lines with overflow summary to avoid context bloat.
+3 lines with overflow summary to avoid context bloat. Tasks auto-terminated
+if output exceeds 5GB.
 
 ### /loop Command
 
@@ -190,6 +216,7 @@ Ask a side question without interrupting current work:
 Forks the current conversation context into a single-turn query with **no tools and
 no file access**. The response appears in a dismissible overlay that never enters
 conversation history. Reuses the parent conversation's prompt cache for minimal cost.
+Available even while Claude is processing a response.
 
 **Key distinction:** `/btw` is the inverse of a subagent — it sees full context but
 has no tools, while a subagent has tools but starts with empty context.
@@ -342,6 +369,34 @@ Use `--chrome` flag per-session to avoid this if not always needed.
 
 ---
 
+## Claude Code Desktop App
+
+**Status:** GA | **Platforms:** macOS, Windows (no Linux)
+
+Standalone desktop application providing Claude Code with a graphical interface.
+Three tabs: **Chat** (no file access), **Cowork** (autonomous cloud agent), and
+**Code** (interactive local coding).
+
+### Desktop-Specific Features
+
+- **Visual diff review** with inline comments: click lines in diff to comment, submit all with Cmd/Ctrl+Enter. Claude reads comments and revises.
+- **Review code**: click "Review code" in diff toolbar — Claude evaluates diffs and leaves inline suggestions (high-signal only: compile errors, logic errors, security, obvious bugs)
+- **Live app preview**: embedded browser for dev server verification, auto-verify changes after every edit (configurable via `.claude/launch.json`)
+- **GitHub PR monitoring**: CI status bar with auto-fix (reads failures, iterates) and auto-merge (squash, requires GitHub repo setting)
+- **Parallel sessions**: each session gets isolated Git worktree automatically
+- **Scheduled tasks**: recurring sessions at configured times (daily reviews, dependency audits, morning briefings). Requires app open and computer awake.
+- **Connectors**: GUI setup for MCP integrations (GitHub, Slack, Linear, Notion, Google Calendar, etc.)
+- **Session environments**: Local, Remote (cloud), or SSH
+- **Continue in another surface**: move session to web or IDE via "Continue in" menu
+
+### Extension Parity
+
+Shares the same core as CLI, VS Code, and JetBrains — same agentic loop, tools,
+skills, hooks, plugins, MCP, settings. Desktop adds visual diff, preview, PR
+monitoring, scheduled tasks, and connectors on top.
+
+---
+
 ## CLI Reference
 
 ### Key Commands
@@ -360,7 +415,8 @@ Use `--chrome` flag per-session to avoid this if not always needed.
 | `claude auth login` | Log in (supports `--email`, `--sso`) |
 | `claude auth logout` | Log out |
 | `claude auth status` | Show authentication status |
-| `claude remote-control` | Start remote control session |
+| `claude remote-control` | Start remote control server mode |
+| `claude --remote-control` / `--rc` | Interactive session with remote access |
 | `claude --remote "task"` | Start web session from terminal |
 | `claude --teleport` | Pull web session into terminal |
 
@@ -374,6 +430,7 @@ Use `--chrome` flag per-session to avoid this if not always needed.
 | `--tools` | Restrict available tools (`"Bash,Edit,Read"` or `""` for none) |
 | `--json-schema` | Get validated JSON output matching schema (print mode) |
 | `--remote` | Create web session on claude.ai |
+| `--remote-control` / `--rc` | Interactive session with remote control |
 | `--teleport` | Resume a web session locally |
 | `--from-pr N` | Resume sessions linked to a GitHub PR |
 | `--max-turns` | Limit agentic turns (print mode) |
@@ -389,6 +446,8 @@ Use `--chrome` flag per-session to avoid this if not always needed.
 | `--add-dir` | Add additional working directories |
 | `--allowedTools` | Tools auto-approved without permission prompts |
 | `--disallowedTools` | Tools blocked entirely |
+| `--spawn <mode>` | Concurrent session mode for remote-control server (same-dir/worktree) |
+| `--capacity <N>` | Max concurrent sessions for remote-control server |
 | `--verbose` | Enable verbose logging |
 
 ### --agents Flag Format
@@ -417,6 +476,39 @@ which subagents can be spawned.
 `Agent(Explore)`). Legacy `Task(...)` syntax still works as an alias (since v2.1.63).
 `SubagentStop` supports matchers by agent type name.
 
+### Interactive Mode Highlights
+
+- **Prompt suggestions**: context-aware suggestions after each response (Tab to accept, Enter to accept+submit). Based on git history and conversation. Disable with `CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION=false`.
+- **Bash mode**: prefix input with `!` to run shell commands directly without Claude interpreting them. Supports Tab autocomplete from `!` history.
+- **Task list**: `Ctrl+T` toggles task progress display (up to 10 tasks). Persists across compactions. Share across sessions with `CLAUDE_CODE_TASK_LIST_ID`.
+- **PR review status**: footer shows clickable PR link with colored underline (green=approved, yellow=pending, red=changes requested, gray=draft, purple=merged). Updates every 60s. Requires `gh` CLI.
+- **Voice input**: hold Space for push-to-talk dictation (requires Claude.ai account)
+- **Vim mode**: `/vim` to toggle, `/config` to set permanently
+- **Reverse search**: `Ctrl+R` for interactive history search
+- **Rewind**: `Esc`+`Esc` to restore code/conversation to a previous point or summarize from a message
+- **Model switching**: `Alt+P`/`Option+P` to switch models without clearing prompt
+- **Effort level**: `/effort` command (low/medium/high/max/auto). `max` requires Opus 4.6, current session only.
+
+### Built-In Commands (Selection)
+
+| Command | Purpose |
+|---------|---------|
+| `/compact [instructions]` | Compact conversation with optional focus |
+| `/context` | Visualize context usage as colored grid |
+| `/copy [N]` | Copy assistant response to clipboard (interactive block picker) |
+| `/desktop` / `/app` | Continue session in Desktop app |
+| `/diff` | Interactive diff viewer (uncommitted + per-turn diffs) |
+| `/effort` | Set model effort level |
+| `/export [filename]` | Export conversation as plain text |
+| `/insights` | Analyze session patterns and friction points |
+| `/memory` | Edit CLAUDE.md files, toggle auto-memory |
+| `/plan` | Enter plan mode from prompt |
+| `/pr-comments [PR]` | Fetch GitHub PR comments |
+| `/rewind` / `/checkpoint` | Rewind conversation/code to previous point |
+| `/security-review` | Analyze branch changes for security vulnerabilities |
+| `/stats` | Daily usage, session history, streaks |
+| `/voice` | Toggle push-to-talk dictation |
+
 ### Structured Output (Print Mode)
 
 ```bash
@@ -441,11 +533,6 @@ VS Code's workspace.
 
 Available as a JetBrains plugin for IntelliJ IDEA, PyCharm, WebStorm, GoLand,
 and other JetBrains IDEs. Full feature parity with CLI and VS Code extension.
-
-### Claude Desktop App
-
-Standalone desktop application (separate from Claude Desktop the chat app).
-Provides the same Claude Code experience without requiring a terminal or IDE.
 
 ### Extension Parity
 
@@ -590,6 +677,7 @@ Packaging:
 | `Notification` | Claude sends a notification |
 | `Stop` | Claude finishes responding |
 | `ConfigChange` | Settings or skills change externally |
+| `SessionStart` | A new session begins (runs in both local and cloud) |
 | `TeammateIdle` | A teammate becomes idle |
 | `TaskCompleted` | A background task finishes |
 | `WorktreeCreate` | A git worktree is created |

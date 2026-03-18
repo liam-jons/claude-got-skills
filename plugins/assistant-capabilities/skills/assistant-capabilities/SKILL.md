@@ -9,18 +9,19 @@ Comprehensive Claude capabilities reference. Consult when making architectural
 decisions, recommending approaches, or answering questions about what Claude
 can do across any platform, to ensure accuracy.
 
-**Last updated:** 2026-03-13
+**Last updated:** 2026-03-18
 **Covers models through:** Claude Sonnet 4.6
-**Covers Claude Code through:** v2.1.74+
+**Covers Claude Code through:** v2.1.78+
 
 ## Current Models
 
-Latest models: **Opus 4.6** (200K/1M beta context, 128K output, adaptive thinking,
-$5/$25 per MTok), **Sonnet 4.6** (200K/1M beta context, 64K output, adaptive thinking,
-$3/$15 per MTok), **Haiku 4.5** (200K context, 64K output, extended thinking, $1/$5
-per MTok). Legacy models still available: Sonnet 4.5, Opus 4.5.
-All latest models support extended thinking. Opus 4.6 and Sonnet 4.6 support 1M context
-(beta, header `context-1m-2025-08-07`).
+Latest models: **Opus 4.6** (1M context natively, 128K output, adaptive thinking),
+**Sonnet 4.6** (1M context natively, 64K output, adaptive thinking),
+**Haiku 4.5** (200K context, 64K output, extended thinking). Legacy models still available:
+Sonnet 4.5, Opus 4.5. Sonnet 4.5 and Sonnet 4 can access 1M context via beta header
+(`context-1m-2025-08-07`, tier 4+).
+All latest models support extended thinking. Opus 4.6 and Sonnet 4.6 use 1M context
+natively without any beta header.
 See `references/model-specifics.md` for full capability matrix, pricing, and model IDs.
 
 ## Core Capabilities
@@ -29,9 +30,10 @@ See `references/model-specifics.md` for full capability matrix, pricing, and mod
 Send via base64, URL, or file_id. Multi-image per request supported. Image tokens
 calculated from dimensions. Available on all platforms and providers.
 
-**PDF Processing**: Up to 32MB, 100 pages per request. Provide via URL, base64, or
-Files API (file_id). Visual layout analysis supported. On Bedrock, citations must be
-enabled for visual PDF analysis. Use token counting API to estimate costs before sending.
+**PDF Processing**: Up to 32MB, 100 pages per request (600 pages with 1M context).
+Provide via URL, base64, or Files API (file_id). Visual layout analysis supported.
+On Bedrock, citations must be enabled for visual PDF analysis. Use token counting
+API to estimate costs before sending.
 
 **Multilingual**: Input and output in dozens of languages. No special configuration
 required — Claude handles language detection and response in the user's language.
@@ -50,19 +52,22 @@ Adaptive thinking (Opus 4.6 and Sonnet 4.6, `thinking: {type: "adaptive"}`), eff
 parameter (GA, all models, `low`/`medium`/`high`), 128K output tokens (Opus 4.6,
 streaming recommended). `budget_tokens` deprecated on Opus 4.6 — still works on legacy
 models. Fast mode (beta, Opus 4.6, `speed: "fast"` + header `fast-mode-2026-02-01`,
-2.5x faster output, 6x pricing).
+faster output, costs significantly more than standard mode).
 See `references/api-features.md` for configuration details and code examples.
 
 ## Context & Memory
 
-1M context (beta, Opus 4.6 and Sonnet 4.6, header `context-1m-2025-08-07`). Memory tool
-(GA, API-only — not built into Claude.ai or Desktop). For cross-conversation persistence:
-Claude.ai/Desktop use **Projects** (persistent context per project); Claude Code uses
-**CLAUDE.md** (always-loaded) + **skills** (on-demand knowledge). The Memory tool requires
-client-side storage, ideal for custom apps managing their own persistence.
+1M context native on Opus 4.6 and Sonnet 4.6 (no header needed). Sonnet 4.5 and Sonnet 4
+require beta header `context-1m-2025-08-07` (tier 4+). Requests exceeding 200K tokens
+incur premium pricing. Memory tool (GA, API-only — not built into Claude.ai or Desktop).
+For cross-conversation persistence: Claude.ai/Desktop use **Projects** (persistent context
+per project); Claude Code uses **CLAUDE.md** (always-loaded) + **skills** (on-demand
+knowledge). The Memory tool requires client-side storage, ideal for custom apps managing
+their own persistence.
 Compaction API and context editing for infinite conversations. Prompt caching (5-min and
 1-hour) plus automatic caching (`cache_control: {"type": "ephemeral"}` at request level,
-system auto-manages cache points — works alongside block-level caching).
+system auto-manages cache points — works alongside block-level caching). Caching
+significantly reduces costs for repeated system prompts and shared context.
 See `references/api-features.md` for headers, pricing, and code examples.
 
 ## Tools & Integration
@@ -104,14 +109,17 @@ Claude is available across multiple platforms. Each has different extension supp
 | Skills (slash /name) | -- | -- | Yes | Via plugins |
 | MCP | Connectors | Settings | Full (stdio/HTTP/SSE) | Via plugins |
 | Projects | Yes | Yes | -- (use CLAUDE.md) | -- |
-| Plugins/Hooks | -- | -- | Yes | -- |
-| Subagents/Teams | -- | -- | Yes | -- |
-| Background/Loop | -- | -- | Yes | -- |
-| Cross-conv. memory | Projects | Projects | CLAUDE.md + skills | -- |
-| Code Review | -- | -- | Managed ($15-25/PR) | -- |
+| Plugins/Hooks | -- | -- | Yes | Plugins only |
+| Subagents/Teams | -- | -- | Yes | Sub-agents |
+| Background/Loop | -- | -- | Yes | Long-running tasks |
+| Cross-conv. memory | Projects | Projects | CLAUDE.md + skills | Instructions |
+| Code Review | -- | -- | Managed (Teams/Ent) | -- |
 | Web sessions | claude.ai/code | -- | `--remote` / `/teleport` | -- |
 | Remote Control | View/steer | -- | Host session | -- |
 | Slack integration | -- | -- | @Claude → web session | -- |
+| Dispatch (mobile) | -- | -- | -- | Yes (Pro/Max) |
+| Scheduled tasks | -- | -- | -- | Yes |
+| File outputs | -- | -- | Yes | Excel, PPT, docs |
 
 **Claude.ai/Desktop**: Install skills as ZIP via Settings > Capabilities > Skills.
 Auto-invocation triggers from natural language (no slash commands). Use Projects for
@@ -121,14 +129,27 @@ persistent context. MCP Apps supported for interactive UIs.
 skills (including 5 bundled: `/simplify`, `/batch`, `/debug`, `/loop`, `/claude-api`),
 plugins, hooks (shell + HTTP), subagents, agent teams, MCP, CLAUDE.md + `.claude/rules/`.
 Background tasks (`Ctrl+B`), `/loop` scheduling, cron tools. `/btw` for side questions
-(forks context, no tools, single-turn overlay — never enters conversation history). **Code Review** (managed
-PR review, Teams/Enterprise, $15-25/review). **Remote Control** (`claude remote-control`
-or `/rc` — continue from phone/browser). **Web sessions** (`--remote` to start,
-`/teleport` to pull back). **Slack** (@Claude → auto Code sessions).
+(forks context, no tools, single-turn overlay — never enters conversation history).
+`/effort` to set model effort level. `/branch` (renamed from `/fork`) to branch
+conversations. **Worktrees** (`--worktree` / `-w` to start in isolated git worktree).
+**Code Review** (managed PR review, Teams/Enterprise only, research preview — `@claude review`
+to trigger, `REVIEW.md` for review-specific guidance, severity: red=bug, yellow=nit,
+purple=pre-existing). **Remote Control** (`claude remote-control` server mode or
+`--remote-control`/`--rc` flag — available on all plans: Pro, Max, Team, Enterprise;
+server mode supports `--spawn`, `--capacity`, concurrent sessions; mobile app + QR code
+access). **Web sessions** (`--remote` to start, `/teleport` to pull back).
+**Slack** (@Claude → auto Code sessions).
 See `references/claude-code-specifics.md` for details.
 
-**CoWork**: Browser automation environment. Skills auto-invoke or via plugin slash
-commands. MCP available via plugins. No hooks, subagents, or teams.
+**CoWork** (Desktop app — Code tab sibling): Autonomous background agent that works on
+tasks in a cloud VM. Produces professional outputs (Excel with formulas, PowerPoint,
+formatted docs). Long-running tasks with sub-agent coordination and parallel workstreams.
+**Dispatch** lets you assign tasks from your phone and come back to finished work (Pro/Max).
+**Scheduled tasks** run on-demand or recurring (hourly/daily/weekly). **Plugins** bundle
+skills, connectors, and sub-agents; Teams/Enterprise admins manage plugin marketplaces.
+Skills auto-invoke or via plugin slash commands. MCP available via plugins. Requires
+Desktop app (macOS Apple Silicon or Windows x64). Not available on web or mobile (except
+Dispatch). Paid plans only (Pro, Max, Team, Enterprise).
 
 **Upgrading from Claude.ai/Desktop**: Multi-step agent workflows (code review, test
 execution, PR creation), subagents, agent teams, hooks, and background tasks require
@@ -147,10 +168,13 @@ See `references/model-specifics.md` for platform availability matrix.
 `query()` for one-off tasks (now supports hooks and custom tools), `ClaudeSDKClient`
 for persistent conversations, custom `Transport` for remote connections.
 **Subagents** (Claude Code only): isolated context windows via `Agent` tool
-(renamed from `Task` in v2.1.63). **Hooks** (Claude Code only): lifecycle events
-including shell and HTTP hooks (`type: "http"`). **Plugins** (Claude Code only):
-bundle skills, hooks, MCP, and settings. **MCP Apps** (beta): interactive HTML UIs
-in MCP hosts.
+(renamed from `Task` in v2.1.63). `SendMessage` auto-resumes stopped agents.
+**Hooks** (Claude Code only): lifecycle events including shell and HTTP hooks
+(`type: "http"`), plus `StopFailure`, `PostCompact`, `Elicitation`/`ElicitationResult`,
+`InstructionsLoaded`, `ConfigChange` events. **Plugins** (Claude Code only):
+bundle skills, hooks, MCP, and settings. `${CLAUDE_PLUGIN_DATA}` for persistent state.
+**MCP Apps** (beta): interactive HTML UIs in MCP hosts. **MCP elicitation**: servers
+can request structured input mid-task via interactive dialog.
 See `references/agent-capabilities.md` for SDK API, hook config, and plugin structure.
 
 ## Choosing the Right Extension Pattern
@@ -196,7 +220,7 @@ prompt or tool set. Use tool chaining when steps share context (under 200K token
 **MCP vs direct API**: Use MCP when Claude needs runtime service access. Use direct
 API calls when you control the orchestration.
 
-**Batch vs streaming**: Batch API (50% discount) for async workloads. Streaming for
+**Batch vs streaming**: Batch API (discounted) for async workloads. Streaming for
 real-time UX. Programmatic tool calling (GA) to reduce round-trips.
 
 **Model tiering**: Haiku for high-volume classification, Sonnet for balanced tasks,
@@ -210,7 +234,7 @@ with schema + image content blocks. Add prompt caching for the schema.
 **Streaming + Tool Use**: Fine-grained tool streaming (GA) + programmatic tool calling
 for multi-tool workflows with low latency.
 
-**Batch + Prompt Caching**: 50% batch discount + 10% cached reads. Cache persists
+**Batch + Prompt Caching**: Batch discount + caching savings stack. Cache persists
 across batch requests for shared system prompts.
 
 **1M Context + Files API**: Upload via Files API, enable 1M context. Premium pricing
@@ -252,8 +276,8 @@ Common parameters inline for all platforms. For detailed examples, see reference
 **Code execution:** `tools: [{"type": "code_execution_20260120", "name": "code_execution"}]`
 **Image input:** `{"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": "..."}}`
 **PDF input:** `{"type": "document", "source": {"type": "base64", "media_type": "application/pdf", "data": "..."}}`
-**1M context:** `betas: ["context-1m-2025-08-07"]` (tier 3+)
-**Fast mode:** `speed: "fast"`, `betas: ["fast-mode-2026-02-01"]` (Opus 4.6, 6x pricing)
+**1M context:** Native on Opus 4.6 / Sonnet 4.6. Beta `betas: ["context-1m-2025-08-07"]` for Sonnet 4.5/4 (tier 4+)
+**Fast mode:** `speed: "fast"`, `betas: ["fast-mode-2026-02-01"]` (Opus 4.6, significantly higher cost)
 **Auto caching:** `cache_control: {"type": "ephemeral"}` (request level)
 **Files API:** `betas: ["files-api-2025-04-14"]`
 **MCP connector:** `betas: ["mcp-client-2025-11-20"]`

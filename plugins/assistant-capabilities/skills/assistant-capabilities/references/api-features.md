@@ -4,7 +4,7 @@ Detailed API feature documentation with code examples, beta headers, and
 platform availability. Consult when implementing API calls or configuring
 features.
 
-**Last updated:** 2026-03-13
+**Last updated:** 2026-03-18
 
 ## Table of Contents
 
@@ -105,50 +105,65 @@ response = client.messages.create(
 | Level | Behaviour |
 |-------|-----------|
 | low | Minimal thinking, fast responses |
-| medium | Balanced (default) |
-| high | Thorough reasoning |
+| medium | Balanced (default for Sonnet 4.6) |
+| high | Thorough reasoning (default for Opus 4.6) |
+| max | Absolute highest capability (Opus 4.6 only) |
 
-Note: `max` was removed in Claude Code v2.1.72 (simplified to 3 levels).
-Use `/effort auto` to reset to default.
+Note: Claude Code simplified to 3 levels in v2.1.72 (`max` removed from
+Claude Code). The API still supports all 4 levels. Use `/effort auto` in
+Claude Code to reset to default.
 
-Combine with `thinking: {type: "adaptive"}` on Opus 4.6 for fine-grained
-control. On other models, `effort` works independently.
+Combine with `thinking: {type: "adaptive"}` on Opus 4.6 and Sonnet 4.6 for
+fine-grained control. On other models, `effort` works independently.
 
 ---
 
 ## 1M Context Window
 
-**Status:** Beta | **Models:** All current | **Header:** `context-1m-2025-08-07`
-**Requirement:** Usage tier 3+ (previously tier 4+)
+**Opus 4.6 and Sonnet 4.6:** Native 1M context — no beta header needed. All
+requests up to 1M tokens use standard pricing (no long context premium).
+
+**Sonnet 4.5 and Sonnet 4:** Beta | **Header:** `context-1m-2025-08-07`
+**Requirement:** Usage tier 4+ (or custom rate limits)
 
 ```python
-response = client.beta.messages.create(
+# Opus 4.6 / Sonnet 4.6 — standard API call, no beta header
+response = client.messages.create(
     model="claude-opus-4-6",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "..."}]
+)
+
+# Sonnet 4.5 / Sonnet 4 — beta header required for >200K
+response = client.beta.messages.create(
+    model="claude-sonnet-4-5-20250929",
     max_tokens=1024,
     messages=[{"role": "user", "content": "..."}],
     betas=["context-1m-2025-08-07"]
 )
 ```
 
-**Pricing:** Tokens beyond 200K are premium — 2x input price, 1.5x output
-price. Tokens within the 200K window are standard price.
+**Long context pricing (Sonnet 4.5 / Sonnet 4 only):** Requests exceeding
+200K input tokens are charged at premium rates (2x input, 1.5x output). The
+200K threshold is based solely on input tokens. When exceeded, all tokens in
+the request incur premium pricing.
 
 **Context rot:** Accuracy degrades as token count grows — particularly for
 retrieval tasks in the middle of long contexts. Place critical information at
 the start or end, use prompt caching and compaction to manage context size, and
 prefer structured formats to help Claude locate key details.
 
-**Platform availability:** Claude API (direct). Check Bedrock/Vertex for
-current support.
+**Platform availability:** Claude API, Amazon Bedrock, Google Vertex AI,
+Microsoft Foundry.
 
 ---
 
 ## Compaction API
 
-**Status:** Beta | **Models:** All current | **Header:** Required (beta)
+**Status:** Beta | **Models:** Opus 4.6, Sonnet 4.6 | **Header:** Required (beta)
 
-Server-side context summarisation for infinite conversations. Triggers
-automatically when context approaches the limit. Preserves essential
+Server-side context summarisation for effectively infinite conversations.
+Triggers automatically when context approaches the limit. Preserves essential
 information while reducing token count.
 
 Combine with context editing and memory tool for comprehensive context
@@ -371,7 +386,8 @@ containing source, title, cited_text, and index references.
 ```
 
 **Durations:** 5-minute (all platforms), 1-hour (API, Azure).
-**Cost savings:** cached reads cost 10% of base input price.
+**Cost savings:** Cached reads cost ~10% of base input price. 5-minute cache
+writes cost 1.25x base input; 1-hour cache writes cost 2x base input.
 **Minimum cacheable length:** varies by model (see below).
 
 Mark system prompts, tool definitions, and large documents with cache_control
@@ -430,9 +446,8 @@ response = client.beta.messages.create(
 # response.usage includes speed: "fast" for verification
 ```
 
-**Pricing:** 6x standard Opus rates ($30/$150 per MTok input/output). Stacks
-with prompt caching and data residency multipliers. No additional long context
-surcharge for 1M context (unlike standard speed).
+**Pricing:** 6x standard Opus rates. Stacks with prompt caching and data
+residency multipliers. No additional long context surcharge for 1M context.
 
 **Constraints:**
 - Not available with Batch API or Priority Tier
@@ -455,8 +470,9 @@ response = client.messages.create(
 )
 ```
 
-Values: `"us"` (US-only, 1.1x pricing) or `"global"` (default).
-Per-request control for compliance requirements.
+Values: `"us"` (US-only, 1.1x multiplier on all token pricing) or `"global"`
+(default). Per-request control for compliance requirements. Applies to Claude
+API (1P) only. Earlier models retain existing pricing regardless of setting.
 
 ---
 
@@ -620,7 +636,8 @@ responsive UIs that show tool inputs as they're generated.
 
 ### Tier System
 API access is tiered (1-4) based on usage history and payment. Higher tiers
-unlock higher rate limits and features (e.g., 1M context requires tier 3+).
+unlock higher rate limits and features (e.g., 1M beta context for Sonnet 4.5/4
+requires tier 4+).
 
 For current tier thresholds, per-model rate limits, and your current tier:
 - https://platform.claude.com (account dashboard)
@@ -654,11 +671,10 @@ For manual handling, check the `Retry-After` header.
 | Memory tool | GA | - | - | - |
 | MCP connector | Beta | - | - | - |
 | Computer use | Beta | Beta | Beta | Beta |
-| 1M context | Beta | Check | Check | Check |
+| 1M context | GA (4.6) / Beta (4.5/4) | GA | GA | GA |
 | Tool search | GA | - | - | - |
 | Vision | GA | GA | GA | GA |
 | PDF processing | GA | GA | GA | GA |
 | Streaming | GA | GA | GA | GA |
 
-Dash (-) indicates not currently available on that platform. "Check" indicates
-support may have been added since last update.
+Dash (-) indicates not currently available on that platform.

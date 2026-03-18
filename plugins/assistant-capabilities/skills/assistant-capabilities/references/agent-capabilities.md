@@ -4,7 +4,7 @@ Agent SDK, subagents, skills system, hooks, MCP integration, and plugin
 architecture. Consult when building agents, configuring automation, or
 integrating external services.
 
-**Last updated:** 2026-03-09
+**Last updated:** 2026-03-18
 
 ## Table of Contents
 
@@ -237,15 +237,73 @@ Run the test suite and report results. Focus on:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | string | Agent identifier |
+| `name` | string | Agent identifier (lowercase letters and hyphens) |
 | `description` | string | When to use this agent |
-| `tools` | list | Allowlist of tools |
+| `tools` | list | Allowlist of tools (inherits all if omitted) |
 | `disallowedTools` | list | Blocklist of tools |
-| `model` | string | Model override (haiku/sonnet/opus) |
+| `model` | string | Model override (haiku/sonnet/opus/full ID/inherit) |
 | `permissionMode` | string | Permission level |
-| `skills` | list | Skills to load |
-| `hooks` | object | Agent-specific hooks |
-| `memory` | object | Persistent memory config (user/project/local) |
+| `maxTurns` | int | Maximum agentic turns before stopping |
+| `skills` | list | Skills to preload into context at startup |
+| `mcpServers` | list | MCP servers scoped to this subagent (see below) |
+| `hooks` | object | Agent-specific lifecycle hooks |
+| `memory` | string | Persistent memory scope: `user`, `project`, or `local` |
+| `background` | bool | Always run as a background task (default: false) |
+| `isolation` | string | Set to `worktree` for isolated git worktree execution |
+
+### Invoking Subagents
+
+Three patterns for explicit invocation:
+
+- **Natural language**: name the subagent in your prompt; Claude decides
+  whether to delegate
+- **@-mention**: type `@` and pick the subagent from the typeahead (guarantees
+  that subagent runs). Manual format: `@agent-<name>` for local,
+  `@agent-<plugin>:<name>` for plugin subagents
+- **Session-wide via `--agent`**: `claude --agent code-reviewer` makes the
+  subagent's system prompt, tools, and model active for the entire session.
+  Set `"agent": "code-reviewer"` in `.claude/settings.json` to make it the
+  default for a project
+
+### MCP Server Scoping
+
+Use `mcpServers` to give a subagent access to MCP servers unavailable in the
+main conversation. Entries are either inline definitions or string references:
+
+```yaml
+mcpServers:
+  # Inline: scoped to this subagent only
+  - playwright:
+      type: stdio
+      command: npx
+      args: ["-y", "@playwright/mcp@latest"]
+  # Reference: reuses an already-configured server
+  - github
+```
+
+Inline servers connect when the subagent starts and disconnect when it finishes.
+To keep MCP tool descriptions out of the main context, define servers inline in
+the subagent rather than in `.mcp.json`.
+
+### Persistent Memory
+
+The `memory` field gives subagents a directory that persists across sessions:
+
+| Scope | Location | Use when |
+|-------|----------|----------|
+| `user` | `~/.claude/agent-memory/<name>/` | Learnings apply across all projects |
+| `project` | `.claude/agent-memory/<name>/` | Knowledge is project-specific, shareable via VCS |
+| `local` | `.claude/agent-memory-local/<name>/` | Project-specific but not committed |
+
+When enabled, the subagent's prompt includes instructions for reading/writing
+the memory directory. The first 200 lines of `MEMORY.md` are injected at
+startup. Read, Write, and Edit tools are auto-enabled.
+
+### Plugin Subagent Security
+
+Plugin subagents do **not** support `hooks`, `mcpServers`, or `permissionMode`
+fields — these are silently ignored when loading agents from a plugin. To use
+these fields, copy the agent file into `.claude/agents/` or `~/.claude/agents/`.
 
 ### Agent Tool Parameters (v2.1.72+)
 
@@ -260,6 +318,8 @@ overrides (restored in v2.1.72). Also: `ExitWorktree` tool leaves an
   keep main context clean
 - **Chain subagents**: orchestrate multi-step workflows with specialised agents
 - **Cost optimisation**: use Haiku for analysis tasks, Opus for complex reasoning
+- **Restrict spawning**: use `Agent(worker, researcher)` in tools to limit
+  which subagent types can be launched from `--agent` sessions
 
 ### Scope Hierarchy
 
@@ -279,40 +339,70 @@ Lifecycle automation at key events. Four hook types:
 |------|-----------|----------|
 | `command` | Shell script execution | File validation, logging, notifications |
 | `http` | POST event data to HTTP endpoint | Remote integrations, webhooks |
-| `prompt` | LLM evaluation | Content review, policy checks |
-| `agent` | Tool-enabled verification | Complex validation requiring tool access |
+| `prompt` | LLM single-turn evaluation | Content review, policy checks |
+| `agent` | Tool-enabled subagent verification | Complex validation requiring tool access |
 
 ### Hook Events
 
 | Event | Trigger | Matcher |
 |-------|---------|---------|
-| `SessionStart` | Session begins | startup/resume/compact |
+| `SessionStart` | Session begins | startup/resume/clear/compact |
+| `InstructionsLoaded` | CLAUDE.md or rules file loaded | No matcher (always fires) |
+| `UserPromptSubmit` | User sends message | No matcher (always fires) |
 | `PreToolUse` | Before tool execution | Tool name regex |
+| `PermissionRequest` | Permission dialog appears | Tool name regex |
 | `PostToolUse` | After tool execution | Tool name regex |
-| `Stop` | Agent stops | — |
+| `PostToolUseFailure` | After tool execution fails | Tool name regex |
+| `Notification` | Notification event | permission_prompt/idle_prompt/auth_success/elicitation_dialog |
+| `SubagentStart` | Subagent spawned | Agent type name |
 | `SubagentStop` | Subagent completes | Agent type name |
-| `UserPromptSubmit` | User sends message | — |
-| `PreCompact` | Before context compaction | — |
-| `Notification` | Notification event | Notification type |
-| `ConfigChange` | Settings/skills change externally | — |
-| `TeammateIdle` | Teammate becomes idle | — |
-| `TaskCompleted` | Task finishes | — |
-| `WorktreeCreate` | Worktree created | — |
-| `WorktreeRemove` | Worktree removed | — |
+| `Stop` | Agent stops | No matcher (always fires) |
+| `TeammateIdle` | Teammate becomes idle | No matcher (always fires) |
+| `TaskCompleted` | Task finishes | No matcher (always fires) |
+| `ConfigChange` | Settings/skills change | user_settings/project_settings/local_settings/policy_settings/skills |
+| `WorktreeCreate` | Worktree created | No matcher (always fires) |
+| `WorktreeRemove` | Worktree removed | No matcher (always fires) |
+| `PreCompact` | Before context compaction | manual/auto |
+| `PostCompact` | After context compaction | manual/auto |
+| `Elicitation` | MCP server requests user input | — |
+| `ElicitationResult` | User responds to MCP elicitation | — |
+| `SessionEnd` | Session terminates | clear/logout/prompt_input_exit/bypass_permissions_disabled/other |
+
+### Hook Handler Fields
+
+**Command hooks**: `type`, `command`, `timeout` (default 600s), `async` (run
+in background), `statusMessage`, `once` (skills only).
+
+**HTTP hooks**: `type`, `url`, `timeout` (default 30s), `headers` (supports
+`$VAR` interpolation via `allowedEnvVars`), `statusMessage`.
+
+**Prompt hooks**: `type`, `prompt` (use `$ARGUMENTS` for hook input JSON),
+`model`, `timeout` (default 30s).
+
+**Agent hooks**: `type`, `prompt`, `model`, `timeout` (default 60s). Spawns a
+subagent with tool access (Read, Grep, Glob) for verification.
 
 ### Hook Configuration
 
 Hooks are configured in settings.json with a matcher (regex on tool name) and
-one or more hook actions. See Claude Code docs for full configuration reference.
+one or more hook actions. They can also be defined in skill/agent YAML
+frontmatter (scoped to that component's lifecycle).
 
 Example use cases:
 - **PreToolUse**: Validate file edits before they happen (lint, format check)
 - **PostToolUse**: Log tool usage, notify on completions
 - **Prompt hooks**: LLM-based content review and policy enforcement
+- **Agent hooks**: Complex validation with file access before allowing actions
 - **HTTP hooks**: Send events to external services (CI, monitoring)
+- **SessionStart**: Inject dynamic context, set environment variables via `CLAUDE_ENV_FILE`
+- **Stop/SubagentStop**: Prevent premature stopping with `decision: "block"`
+- **WorktreeCreate**: Replace default git worktree with custom VCS (SVN, Perforce)
+- **TaskCompleted**: Enforce quality gates before marking tasks done
 
 Hooks receive JSON input (session_id, cwd, event, tool data) and return
-exit code 0 (allow) or 2 (block) with optional feedback via stderr.
+exit code 0 (allow) or 2 (block) with optional feedback via stderr. JSON
+output on stdout provides finer control (decision, hookSpecificOutput,
+continue, additionalContext).
 
 ### Configuration Scopes
 
@@ -321,7 +411,9 @@ exit code 0 (allow) or 2 (block) with optional feedback via stderr.
 | User | `~/.claude/settings.json` | No |
 | Project | `.claude/settings.json` | Yes (committed) |
 | Local | `.claude/settings.local.json` | No (gitignored) |
-| Plugin | hooks.json / plugin.json | Via plugin |
+| Managed | Managed policy settings | Yes (admin-controlled) |
+| Plugin | hooks/hooks.json | Via plugin |
+| Skill/Agent | YAML frontmatter `hooks:` field | Within component |
 
 ---
 
@@ -373,6 +465,52 @@ while response.stop_reason == "pause_turn":
         betas=[...]
     )
 ```
+
+### Claude Code Skills
+
+Skills in Claude Code are Markdown files (SKILL.md) with YAML frontmatter.
+They extend what Claude can do and are invoked via `/skill-name` or
+automatically when Claude determines they're relevant.
+
+#### Bundled Skills
+
+| Skill | Purpose |
+|-------|---------|
+| `/batch <instruction>` | Large-scale parallel changes across codebase in worktrees |
+| `/claude-api` | Load Claude API/SDK reference for your project language |
+| `/debug [description]` | Troubleshoot session by reading debug log |
+| `/loop [interval] <prompt>` | Run a prompt repeatedly on interval |
+| `/simplify [focus]` | Review recent changes for quality and fix issues |
+
+#### Key Frontmatter Fields
+
+| Field | Description |
+|-------|-------------|
+| `name` | Display name (becomes `/slash-command`) |
+| `description` | When to use — Claude uses this for auto-invocation |
+| `disable-model-invocation` | `true` = manual only (no auto-invoke) |
+| `user-invocable` | `false` = hidden from `/` menu (background knowledge) |
+| `allowed-tools` | Tools permitted without approval when skill active |
+| `model` | Model override when skill active |
+| `context` | `fork` = run in isolated subagent context |
+| `agent` | Subagent type for `context: fork` (Explore/Plan/custom) |
+| `hooks` | Lifecycle hooks scoped to skill |
+| `argument-hint` | Autocomplete hint for expected arguments |
+
+#### Dynamic Context Injection
+
+The `` !`command` `` syntax runs shell commands before skill content is sent
+to Claude. Output replaces the placeholder (preprocessing, not Claude execution).
+
+#### Skill Troubleshooting
+
+- **Skill not triggering**: Check description includes natural keywords; verify
+  via "What skills are available?"; try `/skill-name` directly
+- **Skill triggers too often**: Make description more specific; add
+  `disable-model-invocation: true`
+- **Claude doesn't see all skills**: Descriptions are loaded into context at 2%
+  of context window budget (fallback 16,000 chars). Run `/context` to check for
+  excluded skills. Override with `SLASH_COMMAND_TOOL_CHAR_BUDGET` env var
 
 ---
 
@@ -439,6 +577,7 @@ Located at `.claude-plugin/plugin.json`.
 | Hooks | `hooks/hooks.json` or inline | Configured |
 | Settings | `settings.json` | Auto |
 | MCP servers | `.mcp.json` or inline | Configured |
+| LSP servers | `.lsp.json` | Configured |
 
 Skills are invoked as `/plugin-name:skill-name` (e.g., `/my-plugin:deploy`).
 
@@ -446,6 +585,12 @@ Skills are invoked as `/plugin-name:skill-name` (e.g., `/my-plugin:deploy`).
 
 - `${CLAUDE_PLUGIN_ROOT}` — absolute path to plugin directory (use in hooks,
   MCP configs, scripts)
+- `${CLAUDE_PLUGIN_DATA}` — persistent data directory (survives plugin updates)
+
+### Plugin Settings
+
+`settings.json` at plugin root applies defaults when enabled. The `agent` key
+activates a plugin agent as the main thread.
 
 ### CLI Management
 

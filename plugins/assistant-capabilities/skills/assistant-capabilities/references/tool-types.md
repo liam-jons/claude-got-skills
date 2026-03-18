@@ -4,7 +4,7 @@ All built-in tool types with configuration, parameters, and usage patterns.
 Consult when configuring tools, understanding tool-specific limitations, or
 choosing the right tool for a task.
 
-**Last updated:** 2026-03-09
+**Last updated:** 2026-03-18
 
 ## Table of Contents
 
@@ -227,7 +227,7 @@ with ZDR, set `"allowed_callers": ["direct"]` to disable dynamic filtering.
 
 ### Pricing
 
-- Search requests: $10 per 1,000 searches
+- Search requests: per-search fee (see pricing docs)
 - Result token costs: standard input pricing
 - Code execution is free when used with web search
 
