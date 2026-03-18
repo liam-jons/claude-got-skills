@@ -1,6 +1,6 @@
 # Contributing
 
-Welcome, and thanks for your interest in contributing to claude-capabilities!
+Welcome, and thanks for your interest in contributing to claude-got-skills!
 
 ## Issues and Feature Requests
 

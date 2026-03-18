@@ -103,7 +103,6 @@ plugins/
     agents/                   # 6 agent definitions
     commands/                 # Slash command
     references/               # ast-grep starter rules
-evals/                        # Evaluation framework
 ```
 
 ## License

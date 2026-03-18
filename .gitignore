@@ -9,46 +9,31 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Eval raw results and reports (keep scripts only)
-evals/eval-results-*.json
-evals/eval-report-*.md
-evals/browser-eval-report-*.md
-evals/v1.4.0-eval-report.md
-evals/*.zip
+# Evals (development tooling, not shipped to users)
+evals/
 
-# Development artifacts (archived to private repo)
+# Development artifacts (private dev remote only)
 docs/
 launchd/
 pipeline/
 monitoring/
-
-# Source knowledge base (build-time input, not shipped)
 knowledge-base/
-
-# Firecrawl scrape cache
-.firecrawl/
-
-# Browser eval auth state and raw results
-evals/claude-ai-auth-state.json
-evals/browser-eval-*/
-evals/browser-eval-results.json
-evals/browser-eval-run-*/
-
-# Freshness pipeline artifacts
-pipeline/checkpoint.json
-pipeline/run-history.json
-pipeline/reports/
 logs/
 .venv/
+.planning/
+
+# Browser eval runs at root level
+browser-eval-run-*/
 
 # Skill-creator eval artifacts
 eval-set-*.json
 eval-trigger-*.txt
-evals/eval-set-*.json
-evals/description-optimization-results/
 
-# Planning/session artifacts (internal)
-.planning/
+# Firecrawl scrape cache
+.firecrawl/
+
+# Claude local settings
+.claude/
 
 # Editor
 *.swp

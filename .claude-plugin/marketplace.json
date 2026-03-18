@@ -1,21 +1,33 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "claude-got-skills",
   "description": "Claude Code plugins and skills — capabilities awareness, multi-agent codebase review, and more.",
   "owner": {
-    "name": "claude-got-skills"
+    "name": "claude-got-skills",
+    "email": "claude-got-skills@users.noreply.github.com"
   },
   "plugins": [
     {
       "name": "assistant-capabilities",
       "description": "Always-on capabilities awareness — ensures Claude has accurate, current knowledge of its own features across all platforms.",
       "version": "2.5.0",
-      "source": "./plugins/assistant-capabilities"
+      "source": "./plugins/assistant-capabilities",
+      "author": {
+        "name": "Liam Jons"
+      },
+      "category": "productivity",
+      "homepage": "https://github.com/claude-got-skills/claude-got-skills"
     },
     {
       "name": "codebase-review",
       "description": "Full codebase quality review with parallel analysis agents, deterministic tooling, adversarial verification, structured reporting, and automated fix spec generation.",
       "version": "1.4.0",
-      "source": "./plugins/codebase-review"
+      "source": "./plugins/codebase-review",
+      "author": {
+        "name": "Liam Jons"
+      },
+      "category": "development",
+      "homepage": "https://github.com/claude-got-skills/claude-got-skills"
     }
   ]
 }
