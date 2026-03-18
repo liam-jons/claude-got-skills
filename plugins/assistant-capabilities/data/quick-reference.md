@@ -1,4 +1,4 @@
-# Claude Capabilities Quick Reference (v2.5.1, 2026-03-18)
+# Claude Capabilities Quick Reference (v2.6.0, 2026-03-18)
 
 Use this knowledge to give accurate, current answers about what Claude can do.
 For deeper detail on any topic, invoke the assistant-capabilities skill.
