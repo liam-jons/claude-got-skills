@@ -34,7 +34,7 @@ Reference files provide deeper detail with code examples for API features, tool 
 
 **Claude Code (skill only — on-demand, no SessionStart hook):**
 ```bash
-npx skills add liam-jons/claude-got-skills@assistant-capabilities
+npx skills add liam-jons/claude-got-skills --skill assistant-capabilities
 ```
 
 **Claude.ai / Claude Desktop (skill only):**

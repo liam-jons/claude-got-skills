@@ -23,7 +23,7 @@ Then install whichever plugins you need:
 Skills can also be installed standalone via [skills.sh](https://skills.sh):
 
 ```bash
-npx skills add liam-jons/claude-got-skills@assistant-capabilities
+npx skills add liam-jons/claude-got-skills --skill assistant-capabilities
 ```
 
 ---
