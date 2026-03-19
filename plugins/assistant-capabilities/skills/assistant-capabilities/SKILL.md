@@ -50,16 +50,16 @@ system prompts, skills, or Projects (on Claude.ai/Desktop).
 
 Adaptive thinking (Opus 4.6 and Sonnet 4.6, `thinking: {type: "adaptive"}`), effort
 parameter (GA, all models, `low`/`medium`/`high`), 128K output tokens (Opus 4.6,
-streaming recommended). `budget_tokens` deprecated on Opus 4.6 — still works on legacy
-models. Fast mode (beta, Opus 4.6, `speed: "fast"` + header `fast-mode-2026-02-01`,
+streaming recommended). `budget_tokens` deprecated on Opus 4.6 and Sonnet 4.6 — still works on
+legacy models. Fast mode (research preview, Opus 4.6, `speed: "fast"` + header `fast-mode-2026-02-01`,
 faster output, costs significantly more than standard mode).
 See `references/api-features.md` for configuration details and code examples.
 
 ## Context & Memory
 
 1M context native on Opus 4.6 and Sonnet 4.6 (no header needed). Sonnet 4.5 and Sonnet 4
-require beta header `context-1m-2025-08-07` (tier 4+). Requests exceeding 200K tokens
-incur premium pricing. Memory tool (GA, API-only — not built into Claude.ai or Desktop).
+require beta header `context-1m-2025-08-07` (tier 4+). See pricing page for long-context
+rates per model. Memory tool (GA, API-only — not built into Claude.ai or Desktop).
 For cross-conversation persistence: Claude.ai/Desktop use **Projects** (persistent context
 per project); Claude Code uses **CLAUDE.md** (always-loaded) + **skills** (on-demand
 knowledge). The Memory tool requires client-side storage, ideal for custom apps managing
@@ -148,7 +148,7 @@ formatted docs). Long-running tasks with sub-agent coordination and parallel wor
 **Scheduled tasks** run on-demand or recurring (hourly/daily/weekly). **Plugins** bundle
 skills, connectors, and sub-agents; Teams/Enterprise admins manage plugin marketplaces.
 Skills auto-invoke or via plugin slash commands. MCP available via plugins. Requires
-Desktop app (macOS Apple Silicon or Windows x64). Not available on web or mobile (except
+Desktop app (macOS Apple Silicon, Windows x64/ARM64). Not available on web or mobile (except
 Dispatch). Paid plans only (Pro, Max, Team, Enterprise).
 
 **Upgrading from Claude.ai/Desktop**: Multi-step agent workflows (code review, test
@@ -255,7 +255,7 @@ For multi-document cross-referencing: load all if they fit, else use subagents
 - **Prefill removed** (Opus 4.6): returns 400 error. Use structured outputs instead.
 - **budget_tokens deprecated** (Opus 4.6): use `thinking: {type: "adaptive"}` + effort.
 - **output_format deprecated**: use `output_config.format`.
-- **Models retired** (Feb 2026): Sonnet 3.7, Haiku 3.5 retired. Haiku 3 retiring Apr 2026.
+- **Models deprecated** (Feb 2026): Sonnet 3.7, Haiku 3.5 deprecated. Haiku 3 deprecating Apr 2026.
 - **Beta headers removed**: Tool search, code execution, web fetch, web search,
   memory tool, programmatic tool calling — all now GA, no headers required.
 
@@ -266,7 +266,7 @@ Common parameters inline for all platforms. For detailed examples, see reference
 **Adaptive thinking:** `thinking: {"type": "adaptive"}` (Opus 4.6, Sonnet 4.6)
 **Extended thinking:** `thinking: {"type": "enabled", "budget_tokens": N}` (Haiku 4.5, legacy)
 **Structured outputs:** `output_config: {"format": {"type": "json_schema", "schema": {...}}}`
-**Effort:** `effort: "low" | "medium" | "high"` (simplified in v2.1.72, `max` removed)
+**Effort:** `effort: "low" | "medium" | "high" | "max"` (API supports `max` for Opus 4.6; Claude Code simplified to low/medium/high in v2.1.72)
 **Temperature:** `temperature: 0.0-1.0` (default 1.0; lower = more deterministic)
 **Max tokens:** `max_tokens: N` (required; model max varies — see Current Models)
 **Streaming:** `stream: true` (SSE response format)

@@ -80,7 +80,7 @@ For agent workflows, use Claude Code or build with the Agent SDK (Python/TypeScr
 
 - Adaptive thinking: `thinking: {"type": "adaptive"}` (Opus/Sonnet 4.6)
 - Structured outputs: `output_config: {"format": {"type": "json_schema", "schema": {...}}}`
-- Effort: `effort: "low" | "medium" | "high"`
+- Effort: `effort: "low" | "medium" | "high" | "max"` (max: Opus 4.6 API only)
 - Memory: `tools: [{"type": "memory_20250818", "name": "memory"}]`
 - Web search: `tools: [{"type": "web_search_20250305", "name": "web_search"}]`
 - Code execution: `tools: [{"type": "code_execution_20260120", "name": "code_execution"}]`

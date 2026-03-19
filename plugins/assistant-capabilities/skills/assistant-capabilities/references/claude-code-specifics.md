@@ -6,7 +6,7 @@ skills system, and plugin development. These capabilities are distinct from
 API-level features and only apply in Claude Code contexts.
 
 **Last updated:** 2026-03-18
-**Covers through:** v2.1.74
+**Covers through:** v2.1.78+
 
 ## Table of Contents
 

@@ -109,11 +109,11 @@ https://platform.claude.com/docs/en/about-claude/pricing
 - Prompt caching writes (1-hr TTL): ~100% premium on base input price
 - Data residency, US-only (Opus 4.6+): ~1.1x multiplier on all token categories
 - Fast mode (Opus 4.6, research preview): 6x standard rates
-- Long context premium (Sonnet 4.5 and older only): ~2x input, ~1.5x output beyond 200K tokens
+- Long context premium: ~2x input, ~1.5x output beyond 200K tokens (check pricing page for per-model applicability)
 - Regional endpoints on 3P platforms (Bedrock/Vertex): ~10% premium over global
 
 **Key cost facts:**
-- Opus 4.6 and Sonnet 4.6 include 1M context at standard pricing (no long-context premium)
+- Opus 4.6 and Sonnet 4.6 have native 1M context (no beta header needed). See pricing page for current rates.
 - Code execution is free when used with web search or web fetch tools
 - Fast mode pricing stacks with caching and data residency but is not available with Batch API
 - Caching pays off after one read (5-min TTL) or two reads (1-hr TTL)
@@ -130,7 +130,7 @@ https://platform.claude.com/docs/en/about-claude/pricing
 | Sonnet 4.6 | 1,000,000 tokens | Native (no header needed) |
 | Haiku 4.5 | 200,000 tokens | Not available |
 | Sonnet 4.5 (legacy) | 200,000 tokens | Beta header `context-1m-2025-08-07`, tier 4+ |
-| Opus 4.5 (legacy) | 200,000 tokens | Beta header `context-1m-2025-08-07`, tier 3+ |
+| Opus 4.5 (legacy) | 200,000 tokens | Not documented for 1M access |
 
 Opus 4.6 and Sonnet 4.6 use 1M natively with no beta header and no
 premium pricing. For older models, requests exceeding 200K tokens via
@@ -357,8 +357,8 @@ All Opus 4.5 migration steps above, plus:
 - Use prompt caching for repeated system prompts and tool definitions
 - Use Haiku for subagents and analysis tasks
 - Use batch processing for non-time-sensitive workloads (50% savings)
-- Opus 4.6 and Sonnet 4.6 include 1M context at standard pricing — no long-context premium
-- For older models, avoid 1M context unless necessary (premium pricing beyond 200K)
+- Opus 4.6 and Sonnet 4.6 have native 1M context (no beta header). Check pricing page for long-context rates.
+- For older models (Sonnet 4.5/4), 1M requires beta header and has premium pricing beyond 200K
 - Use `effort: "low"` for simple tasks, `effort: "high"` for complex ones
 - Code execution is free when combined with web search or web fetch
 

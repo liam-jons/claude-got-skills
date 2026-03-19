@@ -422,8 +422,9 @@ alongside explicit block-level cache control (uses one of 4 breakpoint slots).
 - Sonnet 4.6: 2,048 tokens
 - Sonnet 4.5: 1,024 tokens
 
-**Availability:** Claude API and Azure AI Foundry (preview). Not yet
-available on Bedrock or Vertex AI.
+**Automatic caching availability:** Claude API and Azure AI Foundry (preview). Not yet
+available on Bedrock or Vertex AI. Note: block-level prompt caching (explicit breakpoints)
+is GA on all platforms including Bedrock and Vertex AI.
 
 ---
 
