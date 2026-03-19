@@ -389,11 +389,30 @@ Three tabs: **Chat** (no file access), **Cowork** (autonomous cloud agent), and
 - **Session environments**: Local, Remote (cloud), or SSH
 - **Continue in another surface**: move session to web or IDE via "Continue in" menu
 
+### CoWork & Dispatch
+
+**CoWork** is the autonomous background agent tab in the Desktop app. It runs on
+a cloud VM with access to connectors, plugins, and professional output formats
+(Excel with formulas, PowerPoint, formatted docs). Available on all paid plans
+(Pro, Max, Team, Enterprise).
+
+**Dispatch** (Pro/Max only) gives a single persistent conversation thread
+accessible from both the Desktop app and the Claude mobile app (iOS/Android).
+Message Claude from the phone, and Claude works on the desktop using local files,
+connectors, and plugins — then messages the result when done.
+
+Key Dispatch details:
+- **Persistent thread**: context carries across tasks (no reset between messages)
+- **Cross-device**: start from phone, follow up from desktop (same conversation)
+- **Requirements**: Desktop app running + computer awake, Claude mobile app, Pro/Max plan
+- **Limitations**: one continuous thread (no multiple threads), no proactive notifications from Claude, desktop must be active
+- **Scheduled tasks are separate**: they do not run in the Dispatch thread
+
 ### Extension Parity
 
 Shares the same core as CLI, VS Code, and JetBrains — same agentic loop, tools,
 skills, hooks, plugins, MCP, settings. Desktop adds visual diff, preview, PR
-monitoring, scheduled tasks, and connectors on top.
+monitoring, scheduled tasks, connectors, and Dispatch on top.
 
 ---
 

@@ -95,28 +95,13 @@ In Claude Code / Agent SDK, use short names: `opus`, `sonnet`, `haiku`
 
 ## Pricing
 
-For current per-MTok rates, cached input pricing, batch discounts, and
-tier details, see the official pricing documentation:
-https://platform.claude.com/docs/en/about-claude/pricing
+For all pricing details, see: https://platform.claude.com/docs/en/about-claude/pricing
 
 **Relative cost ranking** (most to least expensive): Opus > Sonnet > Haiku.
 
-**Pricing multipliers and discounts** (stable, useful for architecture decisions):
-
-- Batch processing: 50% discount on all models
-- Prompt caching reads: ~10% of base input price
-- Prompt caching writes (5-min TTL): ~25% premium on base input price
-- Prompt caching writes (1-hr TTL): ~100% premium on base input price
-- Data residency, US-only (Opus 4.6+): ~1.1x multiplier on all token categories
-- Fast mode (Opus 4.6, research preview): 6x standard rates
-- Long context premium: ~2x input, ~1.5x output beyond 200K tokens (check pricing page for per-model applicability)
-- Regional endpoints on 3P platforms (Bedrock/Vertex): ~10% premium over global
-
-**Key cost facts:**
-- Opus 4.6 and Sonnet 4.6 have native 1M context (no beta header needed). See pricing page for current rates.
-- Code execution is free when used with web search or web fetch tools
-- Fast mode pricing stacks with caching and data residency but is not available with Batch API
-- Caching pays off after one read (5-min TTL) or two reads (1-hr TTL)
+Do not state specific prices — they change frequently. Refer users to the
+pricing page for current rates, batch discounts, caching savings, and
+long context pricing.
 
 ---
 
@@ -333,7 +318,7 @@ All Opus 4.5 migration steps above, plus:
 1. Effort parameter includes `max` level (Opus 4.6 exclusive)
 2. Programmatic tool calling now GA on Opus 4.6 — no header required
 3. Context awareness system warnings not present on Opus 4.6
-4. Budget will increase significantly (Opus tier pricing vs Sonnet tier)
+4. Budget will increase (Opus tier vs Sonnet tier — check pricing page)
 
 ---
 
@@ -342,25 +327,23 @@ All Opus 4.5 migration steps above, plus:
 | Use Case | Recommended | Rationale |
 |----------|-------------|-----------|
 | Complex reasoning, research | Opus 4.6 | Adaptive thinking, 128K output, highest capability |
-| Coding, general agent tasks | Sonnet 4.6 | Adaptive thinking, balanced cost/performance |
-| High-volume processing | Haiku 4.5 | Lowest cost, fastest latency |
-| Batch analysis | Haiku 4.5 + batch | 50% batch discount on cheapest model |
+| Coding, general agent tasks | Sonnet 4.6 | Adaptive thinking, balanced speed/capability |
+| High-volume processing | Haiku 4.5 | Fastest latency |
+| Batch analysis | Haiku 4.5 + batch | Batch discount on fastest model |
 | Multi-tool workflows | Sonnet 4.6 | Programmatic tool calling (GA), dynamic filtering |
 | Web research with filtering | Sonnet 4.6 | Dynamic filtering + free code execution |
 | Document generation | Sonnet 4.6 | Good balance for skills-based work |
-| Subagent tasks | Haiku 4.5 | Cost-effective for delegated analysis |
+| Subagent tasks | Haiku 4.5 | Fast, efficient for delegated analysis |
 | Maximum quality | Opus 4.6 (effort: max) | Highest capability + maximum effort level |
 | Latency-sensitive Opus tasks | Opus 4.6 (fast mode) | Up to 2.5x faster output generation |
 
-### Cost Optimisation Patterns
+### Optimisation Patterns
 
 - Use prompt caching for repeated system prompts and tool definitions
 - Use Haiku for subagents and analysis tasks
-- Use batch processing for non-time-sensitive workloads (50% savings)
-- Opus 4.6 and Sonnet 4.6 have native 1M context (no beta header). Check pricing page for long-context rates.
-- For older models (Sonnet 4.5/4), 1M requires beta header and has premium pricing beyond 200K
+- Use batch processing for non-time-sensitive workloads
 - Use `effort: "low"` for simple tasks, `effort: "high"` for complex ones
-- Code execution is free when combined with web search or web fetch
+- See pricing page for current discounts and long-context rates
 
 ---
 

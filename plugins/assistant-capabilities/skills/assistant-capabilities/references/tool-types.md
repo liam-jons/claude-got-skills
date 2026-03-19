@@ -134,8 +134,8 @@ can be downloaded via Files API using file_ids from the response.
 
 ### Pricing
 
-Code execution is **free** when used in combination with web search or web
-fetch. Standalone usage has separate pricing.
+See pricing page for current rates. Code execution is included at no extra
+cost when used with web search or web fetch.
 
 ### Integration with Skills
 
@@ -227,9 +227,7 @@ with ZDR, set `"allowed_callers": ["direct"]` to disable dynamic filtering.
 
 ### Pricing
 
-- Search requests: per-search fee (see pricing docs)
-- Result token costs: standard input pricing
-- Code execution is free when used with web search
+See pricing page for current search and token rates.
 
 ---
 
@@ -259,8 +257,8 @@ tools = [
 # Previous version: {"type": "web_fetch_20250910", "name": "web_fetch"}
 ```
 
-Available on Opus 4.6 and Sonnet 4.6. Code execution is free when used
-with web fetch. Same ZDR caveat as web search (`allowed_callers: ["direct"]`
+Available on Opus 4.6 and Sonnet 4.6. Code execution included at no extra
+cost when used with web fetch. Same ZDR caveat as web search (`allowed_callers: ["direct"]`
 to disable for ZDR compliance).
 
 ---

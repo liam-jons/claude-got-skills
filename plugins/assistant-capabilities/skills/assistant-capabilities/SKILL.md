@@ -114,12 +114,12 @@ When recommending architectures, apply these rules:
 
 - **Subagents vs tool chaining**: Use subagents when each step needs its own system prompt or tool set. Use tool chaining when steps share context (under 200K tokens).
 - **MCP vs direct API**: Use MCP when Claude needs runtime service access. Use direct API when you control orchestration.
-- **Batch vs streaming**: Batch API (discounted) for async workloads. Streaming for real-time UX. Programmatic tool calling to reduce round-trips.
+- **Batch vs streaming**: Batch API for async workloads. Streaming for real-time UX. Programmatic tool calling to reduce round-trips.
 - **Model tiering**: Haiku for high-volume classification, Sonnet for balanced tasks, Opus for complex reasoning. Add `effort: "low"` for simple, `"high"` for critical steps.
 - **Document processing**: With 1M context, most documents fit in a single pass (prefer under 800K tokens). Only chunk when exceeding 1M or processing many docs in parallel (batch API). Multi-doc cross-referencing: load all if they fit, else subagents (one per doc -> structured summaries -> synthesis).
 - **Vision + Structured Outputs**: Image content blocks + `output_config.format` -> guaranteed JSON.
-- **Batch + Prompt Caching**: Discounts stack. Cache persists across batch requests.
-- **1M Context + Files API**: Upload via Files API, premium pricing only beyond 200K tokens.
+- **Batch + Prompt Caching**: Combine for maximum savings. Cache persists across batch requests.
+- **1M Context + Files API**: Upload via Files API for large document processing.
 - **Memory + Compaction**: Memory tool for critical facts + compaction API for long sessions.
 
 ## Agent Capabilities

@@ -121,9 +121,6 @@ fine-grained control. On other models, `effort` works independently.
 ## 1M Context Window
 
 **Opus 4.6 and Sonnet 4.6:** Native 1M context — no beta header needed.
-Requests exceeding 200K input tokens are charged at premium rates (2x input,
-1.5x output), same as other models. The difference is that no beta header is
-required — 1M access is standard.
 
 **Sonnet 4.5 and Sonnet 4:** Beta | **Header:** `context-1m-2025-08-07`
 **Requirement:** Usage tier 4+ (or custom rate limits)
@@ -145,10 +142,8 @@ response = client.beta.messages.create(
 )
 ```
 
-**Long context pricing (Sonnet 4.5 / Sonnet 4 only):** Requests exceeding
-200K input tokens are charged at premium rates (2x input, 1.5x output). The
-200K threshold is based solely on input tokens. When exceeded, all tokens in
-the request incur premium pricing.
+**Long context (Sonnet 4.5 / Sonnet 4 only):** Requests exceeding
+200K input tokens incur premium rates. See pricing page for details.
 
 **Context rot:** Accuracy degrades as token count grows — particularly for
 retrieval tasks in the middle of long contexts. Place critical information at
@@ -302,7 +297,7 @@ content = client.beta.files.download(file.id)
 
 **Supported types:** PDFs, plain text, images (JPEG/PNG/GIF/WebP), datasets.
 **Limits:** 500 MB per file, 100 GB per organisation.
-**Pricing:** File API operations are free; content billed as input tokens.
+**Pricing:** See pricing page. File API operations themselves are free.
 
 ---
 
@@ -388,8 +383,8 @@ containing source, title, cited_text, and index references.
 ```
 
 **Durations:** 5-minute (all platforms), 1-hour (API, Azure).
-**Cost savings:** Cached reads cost ~10% of base input price. 5-minute cache
-writes cost 1.25x base input; 1-hour cache writes cost 2x base input.
+**Cost savings:** Caching significantly reduces input costs. See pricing page
+for current cache read/write rates.
 **Minimum cacheable length:** varies by model (see below).
 
 Mark system prompts, tool definitions, and large documents with cache_control
@@ -449,8 +444,9 @@ response = client.beta.messages.create(
 # response.usage includes speed: "fast" for verification
 ```
 
-**Pricing:** 6x standard Opus rates. Stacks with prompt caching and data
-residency multipliers. No additional long context surcharge for 1M context.
+**Pricing:** Significantly higher than standard Opus rates. See pricing page.
+Stacks with prompt caching and data residency. No additional long context
+surcharge for 1M context.
 
 **Constraints:**
 - Not available with Batch API or Priority Tier
@@ -473,9 +469,9 @@ response = client.messages.create(
 )
 ```
 
-Values: `"us"` (US-only, 1.1x multiplier on all token pricing) or `"global"`
+Values: `"us"` (US-only, pricing multiplier applies) or `"global"`
 (default). Per-request control for compliance requirements. Applies to Claude
-API (1P) only. Earlier models retain existing pricing regardless of setting.
+API (1P) only. See pricing page for current rates.
 
 ---
 
@@ -483,8 +479,9 @@ API (1P) only. Earlier models retain existing pricing regardless of setting.
 
 **Status:** GA | **Models:** All current | **Header:** None
 
-50% cost reduction for asynchronous batch requests. Submit batches of messages
-for processing with results available when complete.
+Discounted asynchronous batch requests. Submit batches of messages for
+processing with results available when complete. See pricing page for
+current batch discount.
 
 Ideal for: bulk document processing, evaluation runs, data extraction at scale.
 
