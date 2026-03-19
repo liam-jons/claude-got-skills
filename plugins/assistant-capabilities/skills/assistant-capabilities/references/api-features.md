@@ -120,8 +120,10 @@ fine-grained control. On other models, `effort` works independently.
 
 ## 1M Context Window
 
-**Opus 4.6 and Sonnet 4.6:** Native 1M context — no beta header needed. All
-requests up to 1M tokens use standard pricing (no long context premium).
+**Opus 4.6 and Sonnet 4.6:** Native 1M context — no beta header needed.
+Requests exceeding 200K input tokens are charged at premium rates (2x input,
+1.5x output), same as other models. The difference is that no beta header is
+required — 1M access is standard.
 
 **Sonnet 4.5 and Sonnet 4:** Beta | **Header:** `context-1m-2025-08-07`
 **Requirement:** Usage tier 4+ (or custom rate limits)
@@ -299,7 +301,7 @@ content = client.beta.files.download(file.id)
 ```
 
 **Supported types:** PDFs, plain text, images (JPEG/PNG/GIF/WebP), datasets.
-**Limits:** 500 MB per file, 500 GB per organisation.
+**Limits:** 500 MB per file, 100 GB per organisation.
 **Pricing:** File API operations are free; content billed as input tokens.
 
 ---

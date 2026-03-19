@@ -51,7 +51,7 @@ Desktop automation via screenshots, mouse, and keyboard control.
     "display_width_px": 1024,
     "display_height_px": 768,
     "display_number": 1,
-    "enable_zoom": True  # Opus 4.5/4.6 only
+    "enable_zoom": True  # Opus 4.5/4.6, Sonnet 4.6
 }
 ```
 
@@ -70,7 +70,7 @@ Desktop automation via screenshots, mouse, and keyboard control.
 | `left_click_drag` | Click and drag | Enhanced+ |
 | `hold_key` | Hold modifier key | Enhanced+ |
 | `wait` | Pause execution | Enhanced+ |
-| `zoom` | Zoom into region `[x1,y1,x2,y2]` | Opus 4.5/4.6 |
+| `zoom` | Zoom into region `[x1,y1,x2,y2]` | Opus 4.5/4.6, Sonnet 4.6 |
 
 ### Modifier Keys
 

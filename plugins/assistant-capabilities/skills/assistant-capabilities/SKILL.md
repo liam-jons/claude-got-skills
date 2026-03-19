@@ -59,7 +59,7 @@ When the user asks "Can Claude do X?", check this table first. Answer with the s
 
 **When the user is on Claude Code:** Full extension system: skills (5 bundled skills: `/simplify`, `/batch`, `/debug`, `/loop`, `/claude-api`), plugins, hooks (shell + HTTP), subagents, agent teams, MCP, CLAUDE.md + `.claude/rules/`. Key features: background tasks (`Ctrl+B`), `/loop` scheduling, cron tools, `/btw` (side questions — forks context, no tools, single-turn, never enters history), `/effort`, `/branch`, worktrees (`--worktree`/`-w`). Code Review (managed, Teams/Ent only — `@claude review`, `REVIEW.md` config). Remote Control (`claude remote-control` or `--remote-control` — Pro, Max, Team, Enterprise; mobile QR access). Web sessions (`--remote` / `/teleport`). Slack (@Claude -> auto Code sessions). Read `references/claude-code-specifics.md` for details.
 
-**When the user is on CoWork:** Autonomous background agent on cloud VM. Professional outputs (Excel with formulas, PowerPoint, formatted docs). Dispatch from phone (Pro/Max). Scheduled tasks (hourly/daily/weekly). Plugins bundle skills + connectors + sub-agents. Requires Desktop app (macOS Apple Silicon, Windows x64/ARM64). Paid plans only.
+**When the user is on CoWork:** Autonomous background agent on cloud VM. Professional outputs (Excel with formulas, PowerPoint, formatted docs). Dispatch from phone (Pro/Max). Scheduled tasks (configurable cadence: hourly, daily, weekly, weekdays, on-demand). Plugins bundle skills + connectors + sub-agents. Requires Desktop app (macOS Universal, Windows x64). Paid plans only.
 
 **When the user wants multi-step orchestration from Claude.ai/Desktop:** They need either **Claude Code** (full agent) or the **Agent SDK** (Python/TypeScript) or custom orchestration via the **Messages API** with tool use. Claude.ai and Desktop do not support code execution, filesystem access, or multi-step workflows.
 
@@ -102,9 +102,9 @@ When a user describes a need, recommend the right pattern:
 
 **Structured outputs** (GA, incl. Bedrock): `output_config.format` or `strict: true` on tools. Schema limits: 20 strict tools, 24 optional params. `output_format` is deprecated.
 
-**Files API** (beta): 500MB/file, 500GB/org. **Citations**: search_result blocks for RAG. **Agent Skills** (beta): doc generation (pptx, xlsx, docx, pdf) via code execution.
+**Files API** (beta): 500MB/file, 100GB/org. **Citations**: search_result blocks for RAG. **Agent Skills** (beta): doc generation (pptx, xlsx, docx, pdf) via code execution.
 
-**Tools**: Bash, Text Editor, Computer Use, Web Search, Web Fetch, Code Execution, Memory, Tool Search (GA, auto-activates at 10% context), MCP Connector (beta). Programmatic tool calling (GA). Dynamic filtering web tools (`web_search_20260209`, `web_fetch_20260209`). Code Execution free with web search/fetch.
+**Tools**: Bash, Text Editor, Computer Use, Web Search, Web Fetch, Code Execution, Memory, Tool Search (GA), MCP Connector (beta). Programmatic tool calling (GA). Dynamic filtering web tools (`web_search_20260209`, `web_fetch_20260209`). Code Execution free with web search/fetch.
 
 Read `references/api-features.md` for configuration and code examples. Read `references/tool-types.md` for tool configs and compatibility matrix.
 

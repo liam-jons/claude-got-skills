@@ -5,8 +5,8 @@ For deeper detail on any topic, invoke the assistant-capabilities skill.
 
 ## Current Models
 
-- **Opus 4.6** (`claude-opus-4-6`): 200K/1M context, 128K output, adaptive thinking
-- **Sonnet 4.6** (`claude-sonnet-4-6`): 200K/1M context, 64K output, adaptive thinking
+- **Opus 4.6** (`claude-opus-4-6`): 1M context (native), 128K output, adaptive thinking
+- **Sonnet 4.6** (`claude-sonnet-4-6`): 1M context (native), 64K output, adaptive thinking
 - **Haiku 4.5** (`claude-haiku-4-5`): 200K context, 64K output, extended thinking
 - 1M context: native on Opus/Sonnet 4.6 (no header). Beta `context-1m-2025-08-07` for Sonnet 4.5/4 (tier 4+)
 - Fast mode: Opus 4.6 only, `speed: "fast"` + header
@@ -20,7 +20,7 @@ For deeper detail on any topic, invoke the assistant-capabilities skill.
 **Execute**: Sandboxed code execution (Python), programmatic tool calling (no round-trips)
 **Control**: Computer Use — mouse, keyboard, screenshots (beta, `computer_20251124`)
 **Connect**: MCP servers/connectors, Files API (500MB/file), Tool Search (1000s of tools)
-**Reason**: Adaptive thinking, effort control (low/medium/high), 128K output streaming
+**Reason**: Adaptive thinking, effort control (low/medium/high/max), 128K output streaming
 **Review**: Code Review — managed PR review service (Teams/Enterprise)
 **Remote**: Remote Control — continue local sessions from phone/browser (Pro, Max, Team, Enterprise)
 **Cloud**: claude.ai/code — web sessions on Anthropic cloud, `--remote` from CLI, `/teleport` back

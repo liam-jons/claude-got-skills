@@ -634,5 +634,5 @@ capabilities.
 
 ### Supported Hosts
 
-Claude, Claude Desktop, VS Code Insiders, Goose, Postman, MCPJam.
+Claude, Claude Desktop, VS Code GitHub Copilot, Goose, Postman, MCPJam.
 Framework-agnostic (React, Vue, Svelte templates available).
