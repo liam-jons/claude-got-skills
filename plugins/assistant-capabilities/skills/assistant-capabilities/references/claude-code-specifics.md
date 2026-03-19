@@ -50,7 +50,7 @@ For self-hosted reviews, use GitHub Actions or GitLab CI/CD instead.
 
 ## Remote Control
 
-**Status:** GA | **Access:** All plans (Pro, Max, Team, Enterprise). Team/Enterprise admins must enable the toggle in admin settings first (off by default; depends on Claude Code on the web toggle).
+**Status:** GA | **Access:** Pro, Max, Team, Enterprise plans. Team/Enterprise admins must enable the toggle in admin settings first (off by default; depends on Claude Code on the web toggle).
 
 Connect claude.ai/code or the Claude mobile app (iOS/Android) to a local Claude
 Code session. Your local filesystem, MCP servers, tools, and project config stay
@@ -600,7 +600,7 @@ context: inherit       # inherit (default) or fork (isolated subagent)
 
 ### Bundled Skills
 
-5 built-in skills available out of the box:
+5 bundled skills ship with Claude Code (prompt-based, unlike built-in commands which execute fixed logic):
 
 | Skill | Purpose |
 |-------|---------|
@@ -609,7 +609,10 @@ context: inherit       # inherit (default) or fork (isolated subagent)
 | `/debug` | Debug issues systematically |
 | `/loop` | Run recurring prompts on an interval |
 | `/claude-api` | Help with Anthropic API usage |
-| `/btw` | Side question (no tools, no history, dismissible overlay) |
+
+`/btw` is a **built-in command** (not a bundled skill): forks context into a single-turn
+side question with no tools, no history. Dismissible overlay. Available even while
+Claude is processing.
 
 ### Environment
 

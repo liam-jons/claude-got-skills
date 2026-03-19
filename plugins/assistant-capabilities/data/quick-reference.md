@@ -22,7 +22,7 @@ For deeper detail on any topic, invoke the assistant-capabilities skill.
 **Connect**: MCP servers/connectors, Files API (500MB/file), Tool Search (1000s of tools)
 **Reason**: Adaptive thinking, effort control (low/medium/high), 128K output streaming
 **Review**: Code Review — managed PR review service (Teams/Enterprise)
-**Remote**: Remote Control — continue local sessions from phone/browser (all plans)
+**Remote**: Remote Control — continue local sessions from phone/browser (Pro, Max, Team, Enterprise)
 **Cloud**: claude.ai/code — web sessions on Anthropic cloud, `--remote` from CLI, `/teleport` back
 **Integrate**: Slack (@Claude auto sessions), Chrome browser automation
 

@@ -357,6 +357,7 @@ Lifecycle automation at key events. Four hook types:
 | `SubagentStart` | Subagent spawned | Agent type name |
 | `SubagentStop` | Subagent completes | Agent type name |
 | `Stop` | Agent stops | No matcher (always fires) |
+| `StopFailure` | Turn ends due to API error (rate limit, auth) | No matcher (always fires) |
 | `TeammateIdle` | Teammate becomes idle | No matcher (always fires) |
 | `TaskCompleted` | Task finishes | No matcher (always fires) |
 | `ConfigChange` | Settings/skills change | user_settings/project_settings/local_settings/policy_settings/skills |
