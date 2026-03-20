@@ -79,6 +79,11 @@ appear between tool calls for better multi-step reasoning. On Opus 4.6 and
 Sonnet 4.6, interleaving is automatic with adaptive thinking. On Sonnet 4.5,
 enable via `thinking: {type: "enabled", budget_tokens: N}`.
 
+**Display control:** Set `thinking: {type: "adaptive", display: "omitted"}` to
+receive thinking blocks with an empty `thinking` field but the `signature`
+preserved. This reduces response size while maintaining multi-turn continuity
+(signatures are required for verification in subsequent turns).
+
 **Context management:** thinking blocks are automatically stripped from context
 (not carried forward between turns). Effective context:
 `context_window = (input_tokens - previous_thinking_tokens) + current_turn_tokens`.
@@ -162,6 +167,9 @@ Microsoft Foundry.
 Server-side context summarisation for effectively infinite conversations.
 Triggers automatically when context approaches the limit. Preserves essential
 information while reducing token count.
+
+**Platform availability:** Claude API (beta), AWS Bedrock (beta), Google Vertex AI
+(beta), Azure Foundry (beta). Available across all major providers.
 
 Combine with context editing and memory tool for comprehensive context
 management strategies.
@@ -569,7 +577,7 @@ Multiple images per message supported. Each adds to token count independently.
 
 ### Limits
 - Maximum 32MB per PDF
-- Maximum 100 pages per request
+- Maximum 600 pages per request (100 for models with 200K-token context window)
 - Scanned PDFs supported (OCR applied automatically)
 
 ### Sending PDFs
@@ -667,6 +675,7 @@ For manual handling, check the `Retry-After` header.
 | Extended thinking | GA | GA | GA | GA |
 | Prompt caching | GA | GA | GA | GA |
 | Batch processing | GA | GA | GA | Varies |
+| Compaction | Beta | Beta | Beta | Beta |
 | Files API | Beta | - | - | - |
 | Memory tool | GA | - | - | - |
 | MCP connector | Beta | - | - | - |

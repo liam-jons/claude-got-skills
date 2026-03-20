@@ -1,4 +1,4 @@
-# Claude Capabilities Quick Reference (v2.6.0, 2026-03-18)
+# Claude Capabilities Quick Reference (v2.7.0, 2026-03-20)
 
 Use this knowledge to give accurate, current answers about what Claude can do.
 For deeper detail on any topic, invoke the assistant-capabilities skill.
@@ -13,7 +13,7 @@ For deeper detail on any topic, invoke the assistant-capabilities skill.
 
 ## What Claude Can Do
 
-**Process**: Images (JPEG/PNG/GIF/WebP), PDFs (32MB/100pg), multilingual I/O
+**Process**: Images (JPEG/PNG/GIF/WebP), PDFs (32MB/600pg, 100pg on 200K models), multilingual I/O
 **Generate**: Structured JSON (guaranteed), documents (pptx/xlsx/docx/pdf), code
 **Remember**: Memory tool (API), Projects (Claude.ai/Desktop), CLAUDE.md (Code)
 **Search**: Web search, web fetch, dynamic filtering (code execution filters results)
@@ -79,6 +79,7 @@ For agent workflows, use Claude Code or build with the Agent SDK (Python/TypeScr
 ## Key API Parameters
 
 - Adaptive thinking: `thinking: {"type": "adaptive"}` (Opus/Sonnet 4.6)
+- Thinking display omit: `thinking: {"type": "adaptive", "display": "omitted"}`
 - Structured outputs: `output_config: {"format": {"type": "json_schema", "schema": {...}}}`
 - Effort: `effort: "low" | "medium" | "high" | "max"` (max: Opus 4.6 API only)
 - Memory: `tools: [{"type": "memory_20250818", "name": "memory"}]`

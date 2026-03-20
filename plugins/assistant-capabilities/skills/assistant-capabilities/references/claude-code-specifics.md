@@ -2,18 +2,21 @@
 
 Claude Code-specific features: code review, remote control, web sessions, Slack
 integration, agent teams, browser integration, CLI reference, IDE extensions,
-skills system, and plugin development. These capabilities are distinct from
-API-level features and only apply in Claude Code contexts.
+skills system, hooks, subagents, MCP configuration, and plugin architecture.
+These capabilities are distinct from API-level features and only apply in Claude
+Code contexts.
 
-**Last updated:** 2026-03-18
+**Last updated:** 2026-03-20
 **Covers through:** v2.1.78+
 
 ## Table of Contents
 
 - [Code Review](#code-review)
+- [CI/CD Integration](#cicd-integration)
 - [Remote Control](#remote-control)
 - [Claude Code on the Web](#claude-code-on-the-web)
 - [Slack Integration](#slack-integration)
+- [Channels](#channels)
 - [Background Tasks & Scheduling](#background-tasks--scheduling)
 - [Agent Teams](#agent-teams)
 - [Browser Integration](#browser-integration)
@@ -22,6 +25,10 @@ API-level features and only apply in Claude Code contexts.
 - [IDE Extensions](#ide-extensions)
 - [Skills System](#skills-system)
 - [Extension Architecture](#extension-architecture)
+  - [Hooks](#hooks)
+  - [Subagents](#subagents)
+  - [MCP Configuration](#mcp-configuration)
+  - [Plugins](#plugins)
 - [Tool Use Best Practices](#tool-use-best-practices)
 
 ---
@@ -45,6 +52,41 @@ broken edge cases, and regressions. Findings posted as inline comments.
 - **Analytics**: claude.ai/analytics/code-review (PRs reviewed, weekly cost, auto-resolved feedback, per-repo breakdown)
 
 For self-hosted reviews, use GitHub Actions or GitLab CI/CD instead.
+
+---
+
+## CI/CD Integration
+
+### GitHub Actions (GA)
+
+Claude Code GitHub Actions (`claude-code-action@v1`) enables AI-powered
+automation in GitHub workflows. Trigger with `@claude` in PR or issue comments.
+
+**Setup:** `/install-github-app` (quickstart) or manual: install Claude GitHub
+App, add `ANTHROPIC_API_KEY` secret, copy workflow YAML.
+
+**Key capabilities:**
+- Create PRs from issue descriptions
+- Implement features and fix bugs from `@claude` mentions
+- Follows `CLAUDE.md` guidelines and existing code patterns
+- Auto-detects mode (no `mode` config needed in v1.0)
+
+**Configuration:** Use `claude_args` for CLI options (`--model`, `--max-turns`,
+`--append-system-prompt`). Custom `prompt` input for automation workflows.
+
+**Provider support:** Claude API (direct), AWS Bedrock (OIDC), Google Vertex AI
+(Workload Identity Federation). Bedrock/Vertex require a custom GitHub App.
+
+### GitLab CI/CD (Beta)
+
+Comment `@claude` on merge requests or issues. Runs as a CI/CD job using the
+Claude Code Docker image (`ghcr.io/anthropics/claude-code`).
+
+**Setup:** Add `ANTHROPIC_API_KEY` to CI/CD variables, create pipeline YAML
+with `claude-code-action` job. Supports Bedrock (OIDC) and Vertex AI (WIF).
+
+**Costs:** Charged per API token usage. Typical PR review: ~$0.05-0.50.
+Complex implementations: $1-5+. Use `--max-turns` to control spend.
 
 ---
 
@@ -158,6 +200,32 @@ session automatically. Built on the Claude for Slack app with intelligent routin
 - Channel-based access control (invite required)
 - GitHub only, one PR per session
 - Web access required: users without Claude Code on the web access get standard chat responses only
+
+---
+
+## Channels
+
+**Status:** Research preview | **Since:** v2.1.80
+
+MCP servers that push events into a running Claude Code session. One-way
+(alerts, webhooks) or two-way (chat bridges — Telegram, Discord).
+
+**CLI flags:**
+- `--channels plugin:name@marketplace` or `--channels server:name` — opt servers in
+- `--dangerously-load-development-channels` — bypass allowlist for custom channels
+
+**Supported channels (research preview):** Telegram (two-way), Discord (two-way),
+fakechat (localhost demo). Custom channels require the development flag until
+added to the official allowlist via security review.
+
+**Security:** Sender allowlists gate on sender identity (not chat/room), preventing
+prompt injection in group chats. Pairing mechanism for Telegram/Discord.
+
+**Enterprise:** `channelsEnabled` managed setting (disabled by default on
+Team/Enterprise). Requires claude.ai login (API key auth not supported).
+
+**Distinct from Remote Control:** Channels forward events INTO a session.
+Remote Control DRIVES a session from phone/browser.
 
 ---
 
@@ -407,6 +475,37 @@ Key Dispatch details:
 - **Requirements**: Desktop app running + computer awake, Claude mobile app, Pro/Max plan
 - **Limitations**: one continuous thread (no multiple threads), no proactive notifications from Claude, desktop must be active
 - **Scheduled tasks are separate**: they do not run in the Dispatch thread
+
+### CoWork Safety Considerations
+
+- **Be selective about file access**: create a dedicated working folder rather
+  than granting broad access. Claude can read, write, and permanently delete
+  files it has access to. Deletion requires explicit user permission.
+- **Monitor scheduled tasks**: they run automatically without active monitoring.
+  Keep scope narrow, limit file and network access, review outputs regularly.
+- **Limit web access to trusted sources**: web content is a primary vector for
+  prompt injection. Claude's default network access is intentionally restricted.
+- **Evaluate plugins carefully**: each plugin expands Claude's scope of action.
+  Stick to verified extensions from the Claude Desktop directory.
+- **Cross-app data sharing**: when using Claude for Excel/PowerPoint add-ins,
+  data may flow between applications during a session.
+
+### CoWork Admin Controls (Teams & Enterprise)
+
+- **Org-wide toggle**: admins enable/disable CoWork for the organization
+- **Plugin marketplaces**: owners create curated plugin marketplaces with per-plugin
+  installation preferences (auto-install, available, hidden)
+- **Branding**: custom home screen via Organization settings
+- **OpenTelemetry**: track usage, costs, and tool activity across teams (does NOT
+  replace audit logging for compliance)
+
+### CoWork Limitations
+
+- No cross-session memory (Dispatch maintains context within its single thread only)
+- No audit logging — activity is NOT captured in Audit Logs, Compliance API, or Data Exports
+- Local conversation storage only (not subject to Anthropic's data retention policies)
+- Desktop app must remain open and computer awake for tasks to run
+- Higher usage consumption than standard chat (complex multi-step tasks)
 
 ### Extension Parity
 
@@ -690,29 +789,12 @@ Packaging:
 | Automatic validation/logging | Hook |
 | Share across projects | Plugin |
 
-### Hook Events
+### Skills vs Subagents
 
-| Event | Fires when |
-|-------|------------|
-| `PreToolUse` | Before a tool executes |
-| `PostToolUse` | After a tool executes |
-| `Notification` | Claude sends a notification |
-| `Stop` | Claude finishes responding |
-| `ConfigChange` | Settings or skills change externally |
-| `SessionStart` | A new session begins (runs in both local and cloud) |
-| `TeammateIdle` | A teammate becomes idle |
-| `TaskCompleted` | A background task finishes |
-| `WorktreeCreate` | A git worktree is created |
-| `WorktreeRemove` | A git worktree is removed |
-
-Hooks can be shell scripts (default) or HTTP endpoints (`type: "http"`).
-
-### MCP Integration Notes
-
-- `--callback-port` flag for fixed OAuth callback ports
-- `authServerMetadataUrl` override for non-standard OAuth servers
-- Claude.ai MCP servers are auto-available when logged in with a Claude.ai
-  account. Disable with `ENABLE_CLAUDEAI_MCP_SERVERS=false`.
+- **Skills** provide content loaded into current or forked context
+- **Subagents** are isolated workers that run and return summaries
+- They combine: subagents can preload skills (`skills:` field)
+- Use subagents when context window is filling up (work doesn't consume main context)
 
 ### Sandbox Settings
 
@@ -730,12 +812,322 @@ Path prefix resolution:
 - `/` — relative to settings file location
 - `./` — relative to runtime working directory
 
-### Skills vs Subagents
+### Hooks
 
-- **Skills** provide content loaded into current or forked context
-- **Subagents** are isolated workers that run and return summaries
-- They combine: subagents can preload skills (`skills:` field)
-- Use subagents when context window is filling up (work doesn't consume main context)
+**Status:** GA | **Context:** Claude Code / Agent SDK
+
+Lifecycle automation at key events. Four hook types:
+
+#### Hook Types
+
+| Type | Mechanism | Use Case |
+|------|-----------|----------|
+| `command` | Shell script execution | File validation, logging, notifications |
+| `http` | POST event data to HTTP endpoint | Remote integrations, webhooks |
+| `prompt` | LLM single-turn evaluation | Content review, policy checks |
+| `agent` | Tool-enabled subagent verification | Complex validation requiring tool access |
+
+#### Hook Events
+
+| Event | Trigger | Matcher |
+|-------|---------|---------|
+| `SessionStart` | Session begins | startup/resume/clear/compact |
+| `InstructionsLoaded` | CLAUDE.md or rules file loaded | No matcher (always fires) |
+| `UserPromptSubmit` | User sends message | No matcher (always fires) |
+| `PreToolUse` | Before tool execution | Tool name regex |
+| `PermissionRequest` | Permission dialog appears | Tool name regex |
+| `PostToolUse` | After tool execution | Tool name regex |
+| `PostToolUseFailure` | After tool execution fails | Tool name regex |
+| `Notification` | Notification event | permission_prompt/idle_prompt/auth_success/elicitation_dialog |
+| `SubagentStart` | Subagent spawned | Agent type name |
+| `SubagentStop` | Subagent completes | Agent type name |
+| `Stop` | Agent stops | No matcher (always fires) |
+| `StopFailure` | Turn ends due to API error (rate limit, auth) | No matcher (always fires) |
+| `TeammateIdle` | Teammate becomes idle | No matcher (always fires) |
+| `TaskCompleted` | Task finishes | No matcher (always fires) |
+| `ConfigChange` | Settings/skills change | user_settings/project_settings/local_settings/policy_settings/skills |
+| `WorktreeCreate` | Worktree created | No matcher (always fires) |
+| `WorktreeRemove` | Worktree removed | No matcher (always fires) |
+| `PreCompact` | Before context compaction | manual/auto |
+| `PostCompact` | After context compaction | manual/auto |
+| `Elicitation` | MCP server requests user input | — |
+| `ElicitationResult` | User responds to MCP elicitation | — |
+| `SessionEnd` | Session terminates | clear/logout/prompt_input_exit/bypass_permissions_disabled/other |
+
+#### Hook Handler Fields
+
+**Command hooks**: `type`, `command`, `timeout` (default 600s), `async` (run
+in background), `statusMessage`, `once` (skills only).
+
+**HTTP hooks**: `type`, `url`, `timeout` (default 30s), `headers` (supports
+`$VAR` interpolation via `allowedEnvVars`), `statusMessage`.
+
+**Prompt hooks**: `type`, `prompt` (use `$ARGUMENTS` for hook input JSON),
+`model`, `timeout` (default 30s).
+
+**Agent hooks**: `type`, `prompt`, `model`, `timeout` (default 60s). Spawns a
+subagent with tool access (Read, Grep, Glob) for verification.
+
+#### Hook Configuration
+
+Hooks are configured in settings.json with a matcher (regex on tool name) and
+one or more hook actions. They can also be defined in skill/agent YAML
+frontmatter (scoped to that component's lifecycle).
+
+Example use cases:
+- **PreToolUse**: Validate file edits before they happen (lint, format check)
+- **PostToolUse**: Log tool usage, notify on completions
+- **Prompt hooks**: LLM-based content review and policy enforcement
+- **Agent hooks**: Complex validation with file access before allowing actions
+- **HTTP hooks**: Send events to external services (CI, monitoring)
+- **SessionStart**: Inject dynamic context, set environment variables via `CLAUDE_ENV_FILE`
+- **Stop/SubagentStop**: Prevent premature stopping with `decision: "block"`
+- **WorktreeCreate**: Replace default git worktree with custom VCS (SVN, Perforce)
+- **TaskCompleted**: Enforce quality gates before marking tasks done
+
+Hooks receive JSON input (session_id, cwd, event, tool data) and return
+exit code 0 (allow) or 2 (block) with optional feedback via stderr. JSON
+output on stdout provides finer control (decision, hookSpecificOutput,
+continue, additionalContext).
+
+#### Configuration Scopes
+
+| Scope | File | Shared |
+|-------|------|--------|
+| User | `~/.claude/settings.json` | No |
+| Project | `.claude/settings.json` | Yes (committed) |
+| Local | `.claude/settings.local.json` | No (gitignored) |
+| Managed | Managed policy settings | Yes (admin-controlled) |
+| Plugin | hooks/hooks.json | Via plugin |
+| Skill/Agent | YAML frontmatter `hooks:` field | Within component |
+
+### Subagents
+
+**Status:** GA | **Context:** Claude Code / Agent SDK
+
+Isolated AI agents with their own context windows, tool access, and system
+prompts. Launch via the Agent tool (formerly Task tool).
+
+#### Built-in Subagents
+
+| Type | Purpose | Default Model |
+|------|---------|---------------|
+| Explore | Read-only codebase exploration | Haiku |
+| Plan | Research and design planning | Current model |
+| general-purpose | Flexible task execution | Current model |
+
+#### Custom Subagents
+
+Define via Markdown files with YAML frontmatter:
+
+```markdown
+---
+name: test-runner
+description: Run tests and report results
+tools:
+  - Bash
+  - Read
+  - Glob
+disallowedTools:
+  - Write
+  - Edit
+model: haiku
+permissionMode: acceptEdits
+---
+
+Run the test suite and report results. Focus on:
+1. Which tests pass/fail
+2. Error messages for failures
+3. Suggested fixes
+```
+
+#### Frontmatter Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Agent identifier (lowercase letters and hyphens) |
+| `description` | string | When to use this agent |
+| `tools` | list | Allowlist of tools (inherits all if omitted) |
+| `disallowedTools` | list | Blocklist of tools |
+| `model` | string | Model override (haiku/sonnet/opus/full ID/inherit) |
+| `permissionMode` | string | Permission level |
+| `maxTurns` | int | Maximum agentic turns before stopping |
+| `skills` | list | Skills to preload into context at startup |
+| `mcpServers` | list | MCP servers scoped to this subagent (see below) |
+| `hooks` | object | Agent-specific lifecycle hooks |
+| `memory` | string | Persistent memory scope: `user`, `project`, or `local` |
+| `background` | bool | Always run as a background task (default: false) |
+| `isolation` | string | Set to `worktree` for isolated git worktree execution |
+
+#### Invoking Subagents
+
+Three patterns for explicit invocation:
+
+- **Natural language**: name the subagent in your prompt; Claude decides
+  whether to delegate
+- **@-mention**: type `@` and pick the subagent from the typeahead (guarantees
+  that subagent runs). Manual format: `@agent-<name>` for local,
+  `@agent-<plugin>:<name>` for plugin subagents
+- **Session-wide via `--agent`**: `claude --agent code-reviewer` makes the
+  subagent's system prompt, tools, and model active for the entire session.
+  Set `"agent": "code-reviewer"` in `.claude/settings.json` to make it the
+  default for a project
+
+#### MCP Server Scoping
+
+Use `mcpServers` to give a subagent access to MCP servers unavailable in the
+main conversation. Entries are either inline definitions or string references:
+
+```yaml
+mcpServers:
+  # Inline: scoped to this subagent only
+  - playwright:
+      type: stdio
+      command: npx
+      args: ["-y", "@playwright/mcp@latest"]
+  # Reference: reuses an already-configured server
+  - github
+```
+
+Inline servers connect when the subagent starts and disconnect when it finishes.
+To keep MCP tool descriptions out of the main context, define servers inline in
+the subagent rather than in `.mcp.json`.
+
+#### Persistent Memory
+
+The `memory` field gives subagents a directory that persists across sessions:
+
+| Scope | Location | Use when |
+|-------|----------|----------|
+| `user` | `~/.claude/agent-memory/<name>/` | Learnings apply across all projects |
+| `project` | `.claude/agent-memory/<name>/` | Knowledge is project-specific, shareable via VCS |
+| `local` | `.claude/agent-memory-local/<name>/` | Project-specific but not committed |
+
+When enabled, the subagent's prompt includes instructions for reading/writing
+the memory directory. The first 200 lines of `MEMORY.md` are injected at
+startup. Read, Write, and Edit tools are auto-enabled.
+
+#### Plugin Subagent Security
+
+Plugin subagents do **not** support `hooks`, `mcpServers`, or `permissionMode`
+fields — these are silently ignored when loading agents from a plugin. To use
+these fields, copy the agent file into `.claude/agents/` or `~/.claude/agents/`.
+
+#### Agent Tool Parameters (v2.1.72+)
+
+The Agent tool now supports a `model` parameter for per-invocation model
+overrides (restored in v2.1.72). Also: `ExitWorktree` tool leaves an
+`EnterWorktree` session, and `/plan` accepts an optional description argument
+(e.g., `/plan fix the auth bug`). Team agents inherit the leader's model.
+
+#### Subagent Patterns
+
+- **Isolate heavy operations**: push test runs, log analysis to subagents to
+  keep main context clean
+- **Chain subagents**: orchestrate multi-step workflows with specialised agents
+- **Cost optimisation**: use Haiku for analysis tasks, Opus for complex reasoning
+- **Restrict spawning**: use `Agent(worker, researcher)` in tools to limit
+  which subagent types can be launched from `--agent` sessions
+
+#### Scope Hierarchy
+
+CLI flag > project (.claude/agents/) > user (~/.claude/agents/) > plugin agents
+
+### MCP Configuration
+
+#### Transport Types
+
+Three transport types for MCP servers:
+
+| Transport | Use Case | Command |
+|-----------|----------|---------|
+| HTTP | Remote servers (recommended) | `claude mcp add --transport http name url` |
+| SSE | Legacy remote (deprecated) | `claude mcp add --transport sse name url` |
+| stdio | Local processes | `claude mcp add name command args` |
+
+#### Authentication
+
+OAuth 2.0 via `/mcp` command for browser-based auth flow.
+`--callback-port` flag for fixed OAuth callback ports.
+`authServerMetadataUrl` override for non-standard OAuth servers.
+
+#### Configuration Scopes
+
+| Scope | Flag | Description |
+|-------|------|-------------|
+| Local | (default) | Per-project, in `.mcp.json` |
+| Project | `-s project` | Shared, committed to repo |
+| User | `-s user` | All projects |
+
+#### Environment Variables
+
+Support `${VAR}` and `${VAR:-default}` expansion in `.mcp.json`.
+
+#### Managed MCP
+
+`managed-mcp.json` for system-wide deployment with exclusive control.
+Supports allowlist/denylist rules by serverName, serverCommand, or serverUrl.
+
+#### Claude.ai MCP Servers
+
+Claude.ai MCP servers are auto-available when logged in with a Claude.ai
+account. Disable with `ENABLE_CLAUDEAI_MCP_SERVERS=false`.
+
+### Plugins
+
+**Status:** GA | **Context:** Claude Code
+
+Bundle skills, agents, hooks, MCP servers, commands, and LSP servers.
+
+#### Manifest Structure
+
+```json
+{
+  "name": "my-plugin",
+  "version": "1.0.0",
+  "description": "Plugin description",
+  "author": {"name": "Author", "email": "email@example.com"}
+}
+```
+
+Located at `.claude-plugin/plugin.json`.
+
+#### Component Locations
+
+| Component | Directory | Discovery |
+|-----------|-----------|-----------|
+| Skills | `skills/` | Auto (SKILL.md) |
+| Agents | `agents/` | Auto (.md files) |
+| Hooks | `hooks/hooks.json` or inline | Configured |
+| Settings | `settings.json` | Auto |
+| MCP servers | `.mcp.json` or inline | Configured |
+| LSP servers | `.lsp.json` | Configured |
+
+Skills are invoked as `/plugin-name:skill-name` (e.g., `/my-plugin:deploy`).
+
+#### Special Variables
+
+- `${CLAUDE_PLUGIN_ROOT}` — absolute path to plugin directory (use in hooks,
+  MCP configs, scripts)
+- `${CLAUDE_PLUGIN_DATA}` — persistent data directory (survives plugin updates)
+
+#### Plugin Settings
+
+`settings.json` at plugin root applies defaults when enabled. The `agent` key
+activates a plugin agent as the main thread.
+
+#### CLI Management
+
+```bash
+claude plugin install <path-or-url> [--scope user|project|local]
+claude plugin uninstall <name>
+claude plugin enable/disable <name>
+claude plugin update <name>
+```
+
+#### Marketplace
+
+Official marketplace submission forms available for publishing plugins.
 
 ---
 

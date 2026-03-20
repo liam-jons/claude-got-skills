@@ -5,7 +5,7 @@ description: Use when users ask about current Claude capabilities, API features,
 
 # Claude Capabilities Awareness
 
-**Last updated:** 2026-03-19 | **Models through:** Sonnet 4.6 | **Claude Code:** v2.1.78+
+**Last updated:** 2026-03-20 | **Models through:** Sonnet 4.6 | **Claude Code:** v2.1.80+
 
 ## Rules
 
@@ -49,6 +49,7 @@ When the user asks "Can Claude do X?", check this table first. Answer with the s
 | Web sessions | claude.ai/code | -- | `--remote` / `/teleport` | -- |
 | Remote Control | View/steer | -- | Host session | -- |
 | Slack integration | -- | -- | @Claude -> web session | -- |
+| Channels | -- | -- | Research preview (v2.1.80) | -- |
 | Dispatch (mobile) | -- | -- | -- | Yes (Pro/Max) |
 | Scheduled tasks | -- | -- | -- | Yes |
 | File outputs | -- | -- | Yes | Excel, PPT, docs |
@@ -59,7 +60,7 @@ When the user asks "Can Claude do X?", check this table first. Answer with the s
 
 **When the user is on Claude Code:** Full extension system: skills (5 bundled skills: `/simplify`, `/batch`, `/debug`, `/loop`, `/claude-api`), plugins, hooks (shell + HTTP), subagents, agent teams, MCP, CLAUDE.md + `.claude/rules/`. Key features: background tasks (`Ctrl+B`), `/loop` scheduling, cron tools, `/btw` (side questions — forks context, no tools, single-turn, never enters history), `/effort`, `/branch`, worktrees (`--worktree`/`-w`). Code Review (managed, Teams/Ent only — `@claude review`, `REVIEW.md` config). Remote Control (`claude remote-control` or `--remote-control` — Pro, Max, Team, Enterprise; mobile QR access). Web sessions (`--remote` / `/teleport`). Slack (@Claude -> auto Code sessions). Read `references/claude-code-specifics.md` for details.
 
-**When the user is on CoWork:** Autonomous background agent on cloud VM. Professional outputs (Excel with formulas, PowerPoint, formatted docs). Dispatch from phone (Pro/Max). Scheduled tasks (configurable cadence: hourly, daily, weekly, weekdays, on-demand). Plugins bundle skills + connectors + sub-agents. Requires Desktop app (macOS Universal, Windows x64). Paid plans only.
+**When the user is on CoWork:** Autonomous background agent with local file access. Professional outputs (Excel with formulas, PowerPoint, formatted docs). Dispatch from phone (Pro/Max only — single persistent thread, desktop must be awake). Scheduled tasks (on-demand or automated cadence). Plugins bundle skills + connectors + sub-agents. Requires Desktop app (macOS Universal, Windows x64). Paid plans only. **Safety:** Be selective about file access (dedicated working folder), monitor scheduled tasks, limit web access to trusted sites, evaluate plugins carefully. **Limitations:** No cross-session memory, no audit logging, local conversation storage only, desktop app must stay open. Read `references/claude-code-specifics.md` Desktop App section for details.
 
 **When the user wants multi-step orchestration from Claude.ai/Desktop:** They need either **Claude Code** (full agent) or the **Agent SDK** (Python/TypeScript) or custom orchestration via the **Messages API** with tool use. Claude.ai and Desktop do not support code execution, filesystem access, or multi-step workflows.
 
@@ -134,7 +135,7 @@ When recommending architectures, apply these rules:
 
 **MCP Apps** (beta): interactive HTML UIs. **MCP elicitation**: servers request structured input mid-task.
 
-Read `references/agent-capabilities.md` for SDK API, hook config, and plugin structure.
+Read `references/agent-capabilities.md` for SDK API, custom tools, Agent Skills, and MCP Apps. Read `references/claude-code-specifics.md` for hooks, subagents, MCP config, and plugins.
 
 ## Breaking Changes
 
@@ -155,6 +156,7 @@ When a user references any of these, proactively tell them the replacement:
 ## Quick Reference (Key Parameters)
 
 **Adaptive thinking:** `thinking: {"type": "adaptive"}` (Opus 4.6, Sonnet 4.6)
+**Thinking display omit:** `thinking: {"type": "adaptive", "display": "omitted"}` (reduces response size, preserves signatures)
 **Extended thinking:** `thinking: {"type": "enabled", "budget_tokens": N}` (Haiku 4.5, legacy)
 **Structured outputs:** `output_config: {"format": {"type": "json_schema", "schema": {...}}}`
 **Effort:** `effort: "low" | "medium" | "high" | "max"` (API `max` for Opus 4.6; Claude Code also supports `max` and `auto`)
@@ -179,6 +181,6 @@ Read these when the user needs code examples or detailed configuration:
 
 - **`references/api-features.md`** — API config, beta headers, code for structured outputs, Files API, memory, citations, caching, streaming, fast mode
 - **`references/tool-types.md`** — Tool configurations, compatibility matrix
-- **`references/agent-capabilities.md`** — Agent SDK API, hook config, plugin structure
+- **`references/agent-capabilities.md`** — Agent SDK API, custom tools, Agent Skills, MCP Apps
 - **`references/model-specifics.md`** — Model IDs, per-model capabilities, provider details, migration guides
-- **`references/claude-code-specifics.md`** — Code Review, Remote Control, web sessions, Slack, background tasks, /loop, agent teams, CLI reference, IDE extensions
+- **`references/claude-code-specifics.md`** — Code Review, Remote Control, web sessions, Slack, background tasks, /loop, agent teams, CLI reference, IDE extensions, hooks, plugins, subagents, MCP config

@@ -91,6 +91,20 @@ model-specific behaviour.
 In Claude Code / Agent SDK, use short names: `opus`, `sonnet`, `haiku`
 (resolves to latest version of each tier).
 
+### Models API (Programmatic Discovery)
+
+`GET /v1/models` returns all available models with their capabilities:
+
+```python
+models = client.models.list()
+for model in models.data:
+    print(model.id, model.capabilities)  # max_input_tokens, max_tokens, capabilities object
+```
+
+Use `GET /v1/models/{model_id}` for a specific model. The `capabilities` object
+includes feature flags (thinking, vision, tool_use, etc.) for programmatic model
+selection without hardcoding.
+
 ---
 
 ## Pricing
