@@ -12,12 +12,14 @@ Runs a multi-wave review of your entire codebase:
    tsc, ast-grep), identifies hotspots, calculates optimal agent partitions
 2. **Parallel review** — spawns N scope-partitioned agents (sized to your
    codebase) that hunt for bugs, bad patterns, security issues, and
-   architectural smells
+   architectural smells. Optionally includes a test integrity checker.
 3. **Triage** — deduplicates and ranks all findings
 4. **Verification** — spawns targeted agents that adversarially try to disprove
    each Critical/High finding against the actual code
 5. **Final report** — produces a ranked, verified report in
    `.planning/reviews/YYYY-MM-DD/REVIEW-REPORT.md`
+6. **Spec generation** — produces structured fix specifications from Critical/High
+   findings with root cause analysis and code-level fix instructions
 
 ## Requirements
 
@@ -28,7 +30,7 @@ Runs a multi-wave review of your entire codebase:
 ### What to expect
 
 The plugin spawns multiple parallel subagents (typically 4-8 review agents +
-1 pattern checker + 1-3 verification agents) across 5 sequential waves. A
+1 pattern checker + 1-3 verification agents) across 6 sequential waves. A
 review of a ~100K-line codebase takes approximately 15-20 minutes and uses
 significant context across all agents. On a Claude Max subscription, this
 counts toward your usage. On API billing, costs scale with codebase size and
@@ -81,6 +83,8 @@ Add these to your invocation message (e.g., "/codebase-review --verify-all"):
 |------|--------|
 | `--verify-all` | Send Medium findings (not just Critical/High) to adversarial verification. Increases cost ~30%. |
 | `--thorough` | Two-pass review with different partition strategies. Roughly doubles cost but captures ~80% of findings vs ~65% single-pass. |
+| `--test-integrity` | Analyse test suites for tests that pass but validate incorrect behaviour (AI-modified tests that codify bugs, mock the system under test, or weaken assertions). |
+| `--specs` | Generate structured fix specifications from Critical/High findings. Produces work packages with root cause analysis, fix instructions with code, and verification steps. Can also run standalone against a previous review's findings.json. |
 
 ## Optional: project check files
 
@@ -106,10 +110,12 @@ All findings are written to `.planning/reviews/YYYY-MM-DD/`:
 | `deterministic-findings.md` | ESLint, tsc, ast-grep output |
 | `scope-N-findings.md` | Raw findings from each review agent |
 | `pattern-checker-findings.md` | Cross-cutting pattern analysis findings |
+| `test-integrity-findings.md` | Test integrity analysis (with `--test-integrity`) |
 | `triage-findings.md` | Deduplicated and ranked findings |
 | `verification-N.md` | Verification verdicts for Critical/High findings |
 | `REVIEW-REPORT.md` | Final report — the one you read |
 | `findings.json` | Machine-readable findings for programmatic consumption |
+| `specs/spec-N.md` | Fix specifications per work package (with `--specs`) |
 
 ## How many agents?
 

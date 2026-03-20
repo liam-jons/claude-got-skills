@@ -57,24 +57,26 @@ what it covers.
 
 ## Codebase Review
 
-Runs a 5-wave review of your entire codebase using parallel analysis agents:
+Runs a 6-wave review of your entire codebase using parallel analysis agents:
 
 ```
-Reconnaissance  -->  Parallel Review (N agents)  -->  Triage  -->  Verification  -->  Report
+Reconnaissance  -->  Parallel Review (N agents)  -->  Triage  -->  Verification  -->  Report  -->  Specs
                      + Pattern Checker
+                     + Test Integrity Checker
 ```
 
 1. **Reconnaissance** — measures the codebase, runs deterministic tools
    (ESLint, tsc, ast-grep), calculates optimal partitions
 2. **Parallel review** — spawns N scope-partitioned agents + 1 cross-cutting
-   pattern checker
+   pattern checker + optional test integrity checker
 3. **Triage** — deduplicates and ranks findings by severity and confidence
 4. **Verification** — adversarially tries to disprove each Critical/High finding
 5. **Final report** — ranked, verified report with machine-readable JSON output
+6. **Spec generation** — produces structured fix specifications from findings
 
 **What it finds:** Bugs, silent failures, security vulnerabilities, error
-swallowing, race conditions, architectural smells, and systemic anti-patterns
-across your codebase.
+swallowing, race conditions, architectural smells, systemic anti-patterns,
+and tests that pass but validate incorrect behaviour.
 
 **What it costs:** On a Claude Max subscription, a review of a ~100K-line
 codebase takes approximately 15-20 minutes using 4-8 review agents + 1-3
