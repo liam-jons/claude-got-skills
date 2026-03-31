@@ -65,14 +65,17 @@ Reconnaissance  -->  Parallel Review (N agents)  -->  Triage  -->  Verification 
                      + Test Integrity Checker
 ```
 
-1. **Reconnaissance** — measures the codebase, runs deterministic tools
-   (ESLint, tsc, ast-grep), calculates optimal partitions
+1. **Reconnaissance** — measures the codebase, excludes generated/bundled files,
+   runs deterministic tools (ESLint, tsc, ast-grep), captures test baseline,
+   calculates optimal partitions
 2. **Parallel review** — spawns N scope-partitioned agents + 1 cross-cutting
-   pattern checker + optional test integrity checker
-3. **Triage** — deduplicates and ranks findings by severity and confidence
+   pattern checker + optional test integrity checker (all receive shared test baseline)
+3. **Triage** — deduplicates and ranks findings by severity and confidence,
+   with pattern-checker findings subsuming individual scope instances
 4. **Verification** — adversarially tries to disprove each Critical/High finding
 5. **Final report** — ranked, verified report with machine-readable JSON output
-6. **Spec generation** — produces structured fix specifications from findings
+6. **Spec generation** — produces fix specifications with automatic verification,
+   file overlap matrix, dependency graph, and implementation wave planning
 
 **What it finds:** Bugs, silent failures, security vulnerabilities, error
 swallowing, race conditions, architectural smells, systemic anti-patterns,

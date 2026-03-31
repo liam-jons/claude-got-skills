@@ -63,6 +63,14 @@ Identify overlapping findings:
 - Same root cause manifesting in multiple files (report as one finding with
   multiple affected files)
 - Findings that restate deterministic tool output — discard these
+- **Pattern checker subsumption:** When a pattern-checker finding identifies a
+  systemic issue (e.g., "error leakage across 12 files") and scope agents
+  independently flagged individual instances of the same issue, keep ONLY the
+  pattern-checker finding and reference the scope findings as instances within
+  it. The pattern-checker finding has the full picture (all affected files);
+  the scope findings are subsets. Merge any additional detail or evidence from
+  the scope findings into the pattern-checker finding, but do not keep them as
+  separate entries.
 
 When merging duplicates, keep the most detailed description and accumulate all
 affected file paths.

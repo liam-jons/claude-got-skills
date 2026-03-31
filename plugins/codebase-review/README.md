@@ -8,18 +8,23 @@ confidence.
 
 Runs a multi-wave review of your entire codebase:
 
-1. **Reconnaissance** — measures the codebase, runs deterministic tools (ESLint,
-   tsc, ast-grep), identifies hotspots, calculates optimal agent partitions
+1. **Reconnaissance** — measures the codebase, auto-excludes generated/bundled
+   files from token estimation, runs deterministic tools (ESLint, tsc, ast-grep),
+   captures a test failure baseline, calculates optimal agent partitions
 2. **Parallel review** — spawns N scope-partitioned agents (sized to your
    codebase) that hunt for bugs, bad patterns, security issues, and
-   architectural smells. Optionally includes a test integrity checker.
-3. **Triage** — deduplicates and ranks all findings
+   architectural smells. All agents receive the shared test baseline.
+   Optionally includes a test integrity checker.
+3. **Triage** — deduplicates and ranks all findings. Pattern-checker findings
+   automatically subsume individual scope findings for the same systemic issue.
 4. **Verification** — spawns targeted agents that adversarially try to disprove
    each Critical/High finding against the actual code
 5. **Final report** — produces a ranked, verified report in
    `.planning/reviews/YYYY-MM-DD/REVIEW-REPORT.md`
-6. **Spec generation** — produces structured fix specifications from Critical/High
-   findings with root cause analysis and code-level fix instructions
+6. **Spec generation** — produces structured fix specifications with automatic
+   spec verification (cross-references line numbers and code against the
+   codebase), file overlap matrix, dependency graph, and implementation wave
+   planning (max 5 work packages per wave)
 
 ## Requirements
 
@@ -108,6 +113,7 @@ All findings are written to `.planning/reviews/YYYY-MM-DD/`:
 |------|----------|
 | `partitions.md` | How the codebase was divided across agents |
 | `deterministic-findings.md` | ESLint, tsc, ast-grep output |
+| `test-baseline.md` | Pre-existing test failures (shared with all agents) |
 | `scope-N-findings.md` | Raw findings from each review agent |
 | `pattern-checker-findings.md` | Cross-cutting pattern analysis findings |
 | `test-integrity-findings.md` | Test integrity analysis (with `--test-integrity`) |
@@ -115,7 +121,9 @@ All findings are written to `.planning/reviews/YYYY-MM-DD/`:
 | `verification-N.md` | Verification verdicts for Critical/High findings |
 | `REVIEW-REPORT.md` | Final report — the one you read |
 | `findings.json` | Machine-readable findings for programmatic consumption |
-| `specs/spec-N.md` | Fix specifications per work package (with `--specs`) |
+| `specs/INDEX.md` | Work package index with file overlap matrix and implementation waves |
+| `specs/VERIFICATION.md` | Spec verification results (line number/code accuracy) |
+| `specs/*.md` | Fix specifications per work package (with `--specs`) |
 
 ## How many agents?
 

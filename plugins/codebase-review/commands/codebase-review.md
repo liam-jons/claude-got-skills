@@ -49,17 +49,50 @@ find . -type d -maxdepth 1 \
   | sort
 ```
 
-For each source directory found, count files, lines, and estimate tokens:
+For each source directory found, count files, lines, and estimate tokens.
+
+**First, identify and exclude generated files** — these inflate token estimates
+and waste agent context windows:
 
 ```bash
-# Per-directory measurement
+# Find generated/bundled files to exclude (>100KB, or matching generated patterns)
+find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \
+  -o -name "*.py" -o -name "*.css" -o -name "*.rs" -o -name "*.go" \) \
+  -not -path "*/node_modules/*" -not -path "*/.next/*" -not -path "*/dist/*" \
+  -not -path "*/build/*" 2>/dev/null \
+  | while read f; do
+    size=$(wc -c < "$f" 2>/dev/null)
+    if [ "$size" -gt 102400 ]; then echo "$f ($((size/1024))KB)"; fi
+  done
+
+# Also flag files matching generated patterns
+find . -type f \( -name "*-bundle*" -o -name "*.generated.*" -o -name "*.min.*" \
+  -o -name "*.bundle.*" -o -name "chunk-*" -o -name "*.chunk.*" \) \
+  -not -path "*/node_modules/*" 2>/dev/null
+```
+
+Store these paths as EXCLUDED_FILES. Report them:
+
+```
+Excluding {N} generated/bundled files from token estimation:
+  {file} ({size}KB) — over 100KB threshold
+  {file} — matches generated file pattern
+```
+
+Then measure per-directory, excluding the generated files:
+
+```bash
+# Per-directory measurement (excluding generated files)
 for dir in {detected source directories}; do
-  files=$(find "$dir" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.css" -o -name "*.rs" -o -name "*.go" \) 2>/dev/null | grep -v node_modules | wc -l)
-  chars=$(find "$dir" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.css" -o -name "*.rs" -o -name "*.go" \) 2>/dev/null | grep -v node_modules | xargs cat 2>/dev/null | wc -c)
+  files=$(find "$dir" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.css" -o -name "*.rs" -o -name "*.go" \) 2>/dev/null | grep -v node_modules | grep -v -F -f <(echo "$EXCLUDED_FILES") | wc -l)
+  chars=$(find "$dir" -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" -o -name "*.py" -o -name "*.css" -o -name "*.rs" -o -name "*.go" \) 2>/dev/null | grep -v node_modules | grep -v -F -f <(echo "$EXCLUDED_FILES") | xargs cat 2>/dev/null | wc -c)
   tokens=$((chars / 4))
   echo "$dir: $files files, $tokens estimated tokens"
 done
 ```
+
+**Note:** If `grep -v -F -f` is unavailable, manually exclude the identified
+files from the `find` command using `-not -name` flags.
 
 ```bash
 # Large files (>500 lines) — these need focused attention
@@ -126,6 +159,51 @@ find . -type f \( -name "*mock*" -o -name "*fixture*" -o -name "*helper*" \) \
 
 Store the test directory paths, test file count, test framework, and mock
 helper paths for the test integrity checker agent.
+
+**1b-baseline. Capture test failure baseline**
+
+Run the project's test suite once to establish a baseline of pre-existing
+failures. This prevents agents from reporting different counts of "pre-existing
+test failures" because each ran the suite independently.
+
+```bash
+# Detect and run the test suite (adapt to the project)
+if [ -f "vitest.config.ts" ] || [ -f "vitest.config.js" ]; then
+  npx vitest run --reporter=verbose 2>&1 | tail -80
+elif [ -f "jest.config.ts" ] || [ -f "jest.config.js" ]; then
+  npx jest --verbose 2>&1 | tail -80
+elif [ -f "pytest.ini" ] || [ -f "pyproject.toml" ]; then
+  python -m pytest --tb=short 2>&1 | tail -80
+elif [ -f "Cargo.toml" ]; then
+  cargo test 2>&1 | tail -80
+elif [ -f "go.mod" ]; then
+  go test ./... 2>&1 | tail -80
+fi
+```
+
+Parse the output and record in `$REVIEW_DIR/test-baseline.md`:
+
+```markdown
+# Test Baseline
+
+**Date:** {YYYY-MM-DD}
+**Framework:** {vitest|jest|pytest|cargo|go}
+**Total tests:** {N}
+**Passing:** {N}
+**Failing:** {N}
+**Skipped:** {N}
+
+## Pre-existing Failures
+
+{List each failing test name and its error summary, or "None" if all pass}
+```
+
+Pass the path to `test-baseline.md` to ALL Wave 2 agents (scope reviewers,
+pattern checker, and test integrity checker) so they can distinguish new
+failures from existing ones without re-running the suite.
+
+If the test suite fails to run (missing dependencies, no test command found),
+note "Test baseline: unavailable — {reason}" and proceed without it.
 
 **1c. Run deterministic tools**
 
@@ -211,7 +289,9 @@ scope. This converts probabilistic exploration into deterministic checking.
 
 **1e. Calculate partitions**
 
-Using the measurements from 1b, partition the codebase into N scopes. Rules:
+Using the measurements from 1b, partition the codebase into N scopes. Exclude
+all EXCLUDED_FILES (generated/bundled files identified in 1b) from agent scopes.
+Rules:
 
 - **Maximum: 300K estimated tokens per agent. This is a hard limit, not a
   guideline.** If any scope exceeds 300K tokens, split it further. A scope
@@ -282,6 +362,11 @@ Agents MUST verify these patterns are NOT present in their scope. Treat each got
 {actual content of .claude/checks/*.md files and REVIEW.md — read these files and paste their full content here,
 or "None found" if no project standards exist. Do NOT leave this as a placeholder.}
 
+## Test Baseline
+{Path to test-baseline.md from Wave 1, or "Unavailable" if tests couldn't be run.
+Do NOT re-run the test suite — use this baseline to distinguish pre-existing
+failures from new issues you discover.}
+
 ## Output
 Write your findings to: {REVIEW_DIR}/scope-{N}-findings.md
 Use the finding format defined in your agent instructions.
@@ -304,6 +389,9 @@ of instances).
 
 ## Known Risk Patterns (from CLAUDE.md gotchas)
 {extracted gotchas — use these to generate additional search patterns}
+
+## Test Baseline
+{Path to test-baseline.md, or "Unavailable"}
 
 ## Output
 Write your findings to: {REVIEW_DIR}/pattern-checker-findings.md
@@ -335,6 +423,10 @@ Focus on the 6 detection patterns defined in your agent instructions.
 
 ## Known Issues — DO NOT re-flag these
 {deterministic findings from Wave 1}
+
+## Test Baseline
+{Path to test-baseline.md. Use this to distinguish pre-existing failures from
+new issues. Do NOT re-run the full test suite.}
 
 ## Output
 Write your findings to: {REVIEW_DIR}/test-integrity-findings.md
@@ -386,7 +478,12 @@ Write deduplicated, ranked findings to: {REVIEW_DIR}/triage-findings.md
 
 ## Instructions
 1. Read ALL scope findings files
-2. Deduplicate — merge findings about the same issue across scopes
+2. Deduplicate — merge findings about the same issue across scopes.
+   **Pattern checker subsumption:** When a pattern-checker finding identifies
+   a systemic issue and scope agents flagged individual instances of the same
+   issue, keep ONLY the pattern-checker finding. Reference the scope findings
+   as instances within it, merging any additional evidence. Do not keep
+   subsumed scope findings as separate entries.
 3. Rank by severity then confidence
 4. Remove any findings that duplicate deterministic tool output
 5. Separate findings into two groups:
@@ -644,6 +741,52 @@ Use `subagent_type: "spec-writer"` for each agent.
 
 Report progress as each agent completes.
 
+**6d-verify. Verify specs against codebase**
+
+After ALL spec-writer agents complete, verify each spec's accuracy before
+writing INDEX.md. This catches stale line numbers, incorrect code snippets,
+and references to functions that have been renamed or removed.
+
+For each spec file in `$REVIEW_DIR/specs/`:
+
+1. Read the spec file
+2. For every "Current Code" block, extract the file path and line numbers
+3. Read the actual file at those lines and compare:
+   - Does the cited code ACTUALLY exist at the cited lines? (Allow ±5 line drift)
+   - If not, grep for a distinctive snippet from the cited code to find its
+     actual location
+4. For every "Fixed Code" block, verify:
+   - Imports referenced in the fix actually exist in the project
+   - Functions/methods called in the fix exist (grep for their definitions)
+5. Record discrepancies
+
+If any spec has discrepancies, fix them in-place:
+- Update line numbers to match actual locations
+- Update "Current Code" blocks to match the actual code
+- Add a note if the fix references a function that doesn't exist
+
+Write a verification summary to `$REVIEW_DIR/specs/VERIFICATION.md`:
+
+```markdown
+# Spec Verification Results
+
+**Specs verified:** {N}
+**Clean:** {N} (all references accurate)
+**Fixed:** {N} (line numbers or code snippets corrected)
+**Flagged:** {N} (issues that couldn't be auto-corrected)
+
+## Corrections Applied
+
+| Spec | Finding | Issue | Fix |
+|------|---------|-------|-----|
+| WP1 | F003 | Line drift: cited L45-52, actual L48-55 | Updated |
+| WP4 | F012 | Function `escapeValue` not found | Flagged — manual review needed |
+```
+
+**IMPORTANT:** Do not spawn agents for verification — the orchestrator performs
+this directly by reading each spec and cross-referencing the codebase. This is
+a fast, mechanical check.
+
 **6e. Write INDEX.md**
 
 After ALL spec-writer agents complete, the orchestrator writes
@@ -677,6 +820,55 @@ Execute in this order. Higher-severity, lower-complexity work packages first.
 |---------|----------|------|-------|
 | F001 | Critical | WP1 | {short title} |
 | ... | | | |
+
+---
+
+## File Overlap Matrix
+
+Identifies which work packages modify the same files. Work packages sharing
+files MUST be sequenced (not parallelised) to avoid merge conflicts.
+
+| File | Work Packages |
+|------|---------------|
+| `src/components/qa-preview-list.tsx` | WP6, WP10 |
+| `src/hooks/use-review-queue.ts` | WP8, WP10 |
+| ... | |
+
+{If no overlaps exist: "No file overlaps detected — all work packages can
+be executed independently."}
+
+---
+
+## Implementation Waves
+
+Work packages grouped into execution waves based on the dependency graph.
+**Maximum 5 work packages per wave.** Work packages in the same wave can
+be executed in parallel. Waves must be executed sequentially.
+
+### Dependency Graph
+
+```
+WP1 ──→ WP4 (WP4 depends on WP1's utility function)
+WP6 ──→ WP10 (shared file: qa-preview-list.tsx)
+WP8 ──→ WP10 (shared file: use-review-queue.ts)
+WP2, WP3, WP5, WP7, WP9 (independent)
+```
+
+{Generate the dependency graph from:
+1. File overlaps (from the matrix above) — overlapping WPs must be sequenced
+2. Explicit dependencies noted in spec files
+3. Shared utility/helper creation — if one WP creates a helper that another uses}
+
+### Wave Plan
+
+| Wave | Work Packages | Rationale |
+|------|---------------|-----------|
+| 1 | WP1, WP2, WP3, WP5, WP7 | Independent, highest severity first |
+| 2 | WP4, WP6, WP8, WP9 | WP4 depends on WP1; WP6/WP8 before WP10 |
+| 3 | WP10 | Depends on WP6 and WP8 (shared files) |
+
+{Sort within each wave by severity (Critical first) then complexity (Low first).
+If >5 WPs are independent, split into multiple waves of ≤5.}
 
 ---
 

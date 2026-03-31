@@ -10,7 +10,7 @@
     {
       "name": "assistant-capabilities",
       "description": "Always-on capabilities awareness — ensures Claude has accurate, current knowledge of its own features across all platforms.",
-      "version": "2.6.0",
+      "version": "2.7.0",
       "source": "./plugins/assistant-capabilities",
       "author": {
         "name": "Liam Jons"
@@ -21,7 +21,7 @@
     {
       "name": "codebase-review",
       "description": "Full codebase quality review with parallel analysis agents, deterministic tooling, adversarial verification, structured reporting, and automated fix spec generation.",
-      "version": "1.4.0",
+      "version": "1.5.0",
       "source": "./plugins/codebase-review",
       "author": {
         "name": "Liam Jons"
