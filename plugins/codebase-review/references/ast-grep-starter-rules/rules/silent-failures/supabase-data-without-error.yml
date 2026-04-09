@@ -1,0 +1,10 @@
+id: supabase-data-without-error
+language: typescript
+severity: error
+message: "Supabase query destructures `data` without `error`. On DB failure, data will be null and the response will silently return degraded/empty content."
+note: |
+  This is the #1 silent-failure pattern in Supabase codebases (30+ instances
+  in the Knowledge Hub S151 audit). Destructure `{ data, error }` and check
+  error explicitly, or wrap the call in sb()/tryQuery().
+rule:
+  pattern: 'const { data: $X } = await $EXPR'

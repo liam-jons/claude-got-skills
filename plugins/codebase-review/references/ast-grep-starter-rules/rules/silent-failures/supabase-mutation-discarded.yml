@@ -1,0 +1,22 @@
+id: supabase-mutation-discarded
+language: typescript
+severity: error
+message: "Supabase mutation result is discarded. RLS denials, CHECK constraint violations, and wrong-UUID updates become silent no-ops when the return value is not checked for error."
+note: |
+  Check error by destructuring { error } or assigning the result to a
+  variable and inspecting .error. The PostgREST PATCH-on-wrong-UUID silent
+  no-op is documented in the Supabase docs and Knowledge Hub CLAUDE.md.
+rule:
+  kind: expression_statement
+  has:
+    kind: await_expression
+    stopBy: end
+    has:
+      kind: call_expression
+      pattern: $CLIENT.from($_).$METHOD($$$)
+      stopBy: end
+constraints:
+  CLIENT:
+    regex: '^(supabase|sb|client|db)$'
+  METHOD:
+    regex: '^(update|insert|upsert|delete)$'

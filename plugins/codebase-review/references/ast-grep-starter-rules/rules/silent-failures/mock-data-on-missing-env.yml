@@ -1,0 +1,22 @@
+id: mock-data-on-missing-env
+language: typescript
+severity: warning
+message: "Function returns mock/sample data when env var is missing. This is a production fallback to fake data — users see wrong results with no error signal."
+note: |
+  Either fail fast at module load time, or return a 503 error response
+  with a clear "service not configured" message. Mock fallbacks should
+  be behind a NODE_ENV !== 'production' gate, not a runtime null-check.
+rule:
+  any:
+    - pattern: |
+        if (!process.env.$VAR) {
+          return $MOCK;
+        }
+    - pattern: |
+        if (!process.env.$VAR) {
+          $$$
+          return $MOCK;
+        }
+constraints:
+  MOCK:
+    regex: '(?i)(mock|fake|sample|fixture|placeholder)'

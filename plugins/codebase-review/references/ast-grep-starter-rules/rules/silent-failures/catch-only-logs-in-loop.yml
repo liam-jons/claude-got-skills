@@ -1,0 +1,50 @@
+id: catch-only-logs-in-loop
+language: typescript
+severity: warning
+message: "Loop body catches errors but only logs — no failed[] array to report which iterations failed. Callers cannot distinguish partial failure from success."
+note: |
+  Whenever a loop catches per-iteration errors, the response should include
+  both a `results` array and a parallel `failed` array. The catch must push
+  to `failed`, not just console.error. See Knowledge Hub
+  `app/api/freshness/calculate/route.ts` post-fix (commit f338ddf) for the
+  canonical fix shape:
+    const results = [];
+    const failed = [];
+    for (const item of items) {
+      try {
+        results.push(await process(item));
+      } catch (err) {
+        failed.push({ id: item.id, error: (err as Error).message });
+      }
+    }
+    return { results, failed };
+rule:
+  kind: try_statement
+  inside:
+    any:
+      - kind: for_statement
+      - kind: for_in_statement
+      - kind: while_statement
+      - kind: do_statement
+    stopBy: end
+  has:
+    kind: catch_clause
+    has:
+      kind: statement_block
+      all:
+        - has:
+            kind: expression_statement
+            has:
+              kind: call_expression
+              pattern: console.$_($$$)
+              stopBy: end
+            stopBy: end
+        - not:
+            has:
+              kind: call_expression
+              pattern: $_.push($$$)
+              stopBy: end
+        - not:
+            has:
+              kind: throw_statement
+              stopBy: end

@@ -1,0 +1,12 @@
+id: then-catch-ignores-error-param
+language: typescript
+severity: warning
+message: ".catch() arrow function has no error parameter. The error is silently swallowed and the fallback value replaces it with no telemetry or logging."
+note: |
+  Add an error parameter to the arrow function and at minimum log it:
+    .catch((err) => { console.error('fetch failed', err); return null; })
+  Or use a sentinel comment: // best-effort: network flake, fallback is intentional
+rule:
+  any:
+    - pattern: $_.catch(() => $$$)
+    - pattern: $_.catch(() => { $$$ })
