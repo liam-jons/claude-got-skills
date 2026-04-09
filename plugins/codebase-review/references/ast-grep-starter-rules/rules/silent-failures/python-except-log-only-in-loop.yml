@@ -1,0 +1,46 @@
+id: python-except-log-only-in-loop
+language: python
+severity: warning
+message: "Loop body catches exceptions but only logs — no failed[] list to report which iterations failed. Callers cannot distinguish partial failure from success."
+note: |
+  Python equivalent of catch-only-logs-in-loop (H3). Whenever a loop
+  catches per-iteration errors, the response should include both a
+  `results` list and a parallel `failed` list. The except clause must
+  append to `failed`, not just logger.error/warning/exception. Example
+  correct pattern:
+    results = []
+    failed = []
+    for item in items:
+        try:
+            results.append(process(item))
+        except Exception as e:
+            failed.append({"id": item.id, "error": str(e)})
+    return {"results": results, "failed": failed}
+rule:
+  kind: try_statement
+  inside:
+    any:
+      - kind: for_statement
+      - kind: while_statement
+    stopBy: end
+  has:
+    kind: except_clause
+    has:
+      kind: block
+      all:
+        - has:
+            kind: call
+            any:
+              - pattern: logger.$_($$$)
+              - pattern: logging.$_($$$)
+              - pattern: print($$$)
+            stopBy: end
+        - not:
+            has:
+              kind: call
+              pattern: $_.append($$$)
+              stopBy: end
+        - not:
+            has:
+              kind: raise_statement
+              stopBy: end

@@ -20,8 +20,8 @@
     },
     {
       "name": "codebase-review",
-      "description": "Full codebase quality review with parallel analysis agents, deterministic tooling, adversarial verification, structured reporting, and automated fix spec generation.",
-      "version": "1.5.0",
+      "description": "Full codebase quality review with parallel analysis agents, deterministic tooling, adversarial verification, structured reporting, automated fix spec generation, and silent-failure detection across API routes and helpers.",
+      "version": "1.6.0",
       "source": "./plugins/codebase-review",
       "author": {
         "name": "Liam Jons"

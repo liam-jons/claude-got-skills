@@ -1,0 +1,31 @@
+id: resolver-null-conflation
+language: typescript
+severity: warning
+message: "Resolver helper returns `T | null` from a Supabase call without distinguishing 'not found' from 'lookup failed'. A transient DB error becomes a misleading 404."
+note: |
+  The audit M6 pattern — helpers like `resolveGuideId(slug): Promise<string | null>`
+  destructure `data` from a Supabase call and return `data?.x ?? null`
+  without checking `error`. DB errors become "not found" on the caller side,
+  suppressing ops alerting (404s are normal traffic; 500s page someone).
+
+  Fix: return `null` only when `data === null && !error`. Throw or return
+  a Result<T | null, Error> on actual error:
+
+    if (error) throw new ResolverError(`guide lookup failed: ${error.message}`);
+    return data?.id ?? null;
+rule:
+  all:
+    - any:
+        - pattern: 'async function $NAME($$$): Promise<$T | null> { $$$ }'
+        - pattern: 'export async function $NAME($$$): Promise<$T | null> { $$$ }'
+    - has:
+        pattern: 'const { data } = await $$$'
+        stopBy: end
+    - not:
+        has:
+          pattern: 'const { data, error } = $$$'
+          stopBy: end
+    - not:
+        has:
+          pattern: 'const { error } = $$$'
+          stopBy: end

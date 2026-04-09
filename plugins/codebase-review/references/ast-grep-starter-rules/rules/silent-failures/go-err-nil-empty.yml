@@ -1,0 +1,19 @@
+id: go-err-nil-empty
+language: go
+severity: warning
+message: "Empty `if err != nil { }` block silently swallows errors."
+note: |
+  Same root cause as JavaScript empty catch — the failure is invisible
+  to the caller and to any observability system. At minimum log the error
+  and return, or wrap with fmt.Errorf and propagate:
+    if err != nil {
+        return fmt.Errorf("fetching %s: %w", id, err)
+    }
+  If the error is intentionally best-effort, document with a comment
+  and add a Sentry/metric counter.
+rule:
+  any:
+    - pattern: 'if err != nil { }'
+    - pattern: |
+        if err != nil {
+        }

@@ -1,0 +1,15 @@
+id: go-err-discarded
+language: go
+severity: warning
+message: "Error return value discarded via `_ = fn()` or `_, _ = fn()`. The failure is invisible to the caller."
+note: |
+  Go's convention is to assign errors to `err` and check them. Using
+  `_` to discard an error is equivalent to an empty catch — all signal
+  about the failure is lost. Exceptions: known-infallible stdlib calls
+  (rare), or deliberate best-effort cleanup with a comment explaining
+  why the error can be ignored.
+rule:
+  any:
+    - pattern: '_ = $FN($$$)'
+    - pattern: '_, _ = $FN($$$)'
+    - pattern: '_, _, _ = $FN($$$)'

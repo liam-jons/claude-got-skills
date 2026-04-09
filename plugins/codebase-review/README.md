@@ -14,7 +14,12 @@ Runs a multi-wave review of your entire codebase:
 2. **Parallel review** — spawns N scope-partitioned agents (sized to your
    codebase) that hunt for bugs, bad patterns, security issues, and
    architectural smells. All agents receive the shared test baseline.
-   Optionally includes a test integrity checker.
+   Optionally includes a test integrity checker and, for projects with
+   API routes + a DB library, a silent-failure hunter that walks route
+   handlers and their `lib/` helpers for 9 silent-failure patterns
+   (Supabase destructure drops, mutation-discarded, resolver null
+   conflation, fan-out-without-envelope, and universal loop/catch
+   patterns in TS, Python, and Go).
 3. **Triage** — deduplicates and ranks all findings. Pattern-checker findings
    automatically subsume individual scope findings for the same systemic issue.
 4. **Verification** — spawns targeted agents that adversarially try to disprove

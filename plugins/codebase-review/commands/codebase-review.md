@@ -205,6 +205,161 @@ failures from existing ones without re-running the suite.
 If the test suite fails to run (missing dependencies, no test command found),
 note "Test baseline: unavailable — {reason}" and proceed without it.
 
+**1b-api. API surface characterisation (for silent-failure-hunter)**
+
+This step detects whether the codebase has an API surface (routes + a DB
+library) and writes `api-surface.md` so the Wave 2 silent-failure-hunter
+agent knows whether to activate and what to scan.
+
+```bash
+# Detect DB libraries (check manifests first, fall back to source grep)
+DB_LIBS=""
+[ -f package.json ] && grep -q '"@supabase/supabase-js"' package.json 2>/dev/null && DB_LIBS="$DB_LIBS supabase"
+[ -f package.json ] && grep -q '"@prisma/client"\|"prisma"' package.json 2>/dev/null && DB_LIBS="$DB_LIBS prisma"
+[ -f package.json ] && grep -q '"drizzle-orm"' package.json 2>/dev/null && DB_LIBS="$DB_LIBS drizzle"
+[ -f package.json ] && grep -q '"typeorm"' package.json 2>/dev/null && DB_LIBS="$DB_LIBS typeorm"
+[ -f package.json ] && grep -q '"mongoose"\|"mongodb"' package.json 2>/dev/null && DB_LIBS="$DB_LIBS mongo"
+[ -f requirements.txt ] && grep -q 'supabase' requirements.txt 2>/dev/null && DB_LIBS="$DB_LIBS supabase-py"
+[ -f requirements.txt ] && grep -q 'sqlalchemy\|SQLAlchemy' requirements.txt 2>/dev/null && DB_LIBS="$DB_LIBS sqlalchemy"
+[ -f requirements.txt ] && grep -q 'django' requirements.txt 2>/dev/null && DB_LIBS="$DB_LIBS django"
+[ -f pyproject.toml ] && grep -q 'supabase' pyproject.toml 2>/dev/null && DB_LIBS="$DB_LIBS supabase-py"
+[ -f pyproject.toml ] && grep -q 'sqlalchemy\|SQLAlchemy' pyproject.toml 2>/dev/null && DB_LIBS="$DB_LIBS sqlalchemy"
+[ -f go.mod ] && grep -q 'gorm.io/gorm\|jackc/pgx' go.mod 2>/dev/null && DB_LIBS="$DB_LIBS go-db"
+DB_LIBS=$(echo "$DB_LIBS" | xargs)  # trim whitespace; empty if none
+```
+
+```bash
+# Detect API routes (framework-aware) — write paths to a temp file
+API_ROUTES_FILE=$REVIEW_DIR/api-routes.txt
+> $API_ROUTES_FILE
+
+# Next.js app router
+find . -type f \( -name "route.ts" -o -name "route.tsx" -o -name "route.js" -o -name "route.jsx" \) \
+  -path "*/api/*" -not -path "*/node_modules/*" -not -path "*/.next/*" 2>/dev/null >> $API_ROUTES_FILE
+
+# Next.js pages router
+find . -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) \
+  -path "*/pages/api/*" -not -path "*/node_modules/*" 2>/dev/null >> $API_ROUTES_FILE
+
+# Express/Fastify — files containing router.get/post/etc
+grep -rln 'router\.\(get\|post\|put\|patch\|delete\)\|app\.\(get\|post\|put\|patch\|delete\)' . \
+  --include="*.ts" --include="*.tsx" --include="*.js" 2>/dev/null \
+  | grep -v node_modules >> $API_ROUTES_FILE
+
+# FastAPI
+grep -rln '@\(app\|router\)\.\(get\|post\|put\|patch\|delete\)' . \
+  --include="*.py" 2>/dev/null | grep -v __pycache__ >> $API_ROUTES_FILE
+
+# Flask
+grep -rln '@\(app\|blueprint\)\.route' . --include="*.py" 2>/dev/null | grep -v __pycache__ >> $API_ROUTES_FILE
+
+# Go net/http / chi
+grep -rln 'http\.HandleFunc\|mux\.\(Get\|Post\|Handle\)\|chi\.Router' . \
+  --include="*.go" 2>/dev/null >> $API_ROUTES_FILE
+
+# Dedupe and count
+sort -u -o $API_ROUTES_FILE $API_ROUTES_FILE
+ROUTE_COUNT=$(wc -l < $API_ROUTES_FILE | tr -d ' ')
+```
+
+```bash
+# Identify composite routes (≥3 DB query call sites) — line-count based
+# Note: grep -c counts matching LINES, not individual matches, so this
+# under-counts when multiple queries appear on one line. Conservative.
+COMPOSITE_ROUTES_FILE=$REVIEW_DIR/composite-routes.txt
+> $COMPOSITE_ROUTES_FILE
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  count=$(grep -c "await [a-zA-Z_]*\.from(\|await prisma\.\|await db\." "$f" 2>/dev/null || echo 0)
+  if [ "$count" -ge 3 ]; then
+    echo "$f ($count queries)" >> $COMPOSITE_ROUTES_FILE
+  fi
+done < $API_ROUTES_FILE
+COMPOSITE_COUNT=$(wc -l < $COMPOSITE_ROUTES_FILE | tr -d ' ')
+```
+
+```bash
+# Detect canonical remediation patterns in the target codebase
+WARNINGS_EXEMPLAR=$(grep -rln 'warnings[[:space:]]*:[[:space:]]*string\[\]\|warnings[[:space:]]*:[[:space:]]*readonly string\[\]' . \
+  --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v node_modules | head -1)
+SB_WRAPPER=$(grep -rln 'from [\x27"]@*/*lib/supabase/safe[\x27"]\|export.*function sb<\|export.*function tryQuery' . \
+  --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v node_modules | head -1)
+RESULT_TYPE=$(grep -rln 'type Result<.*ok:[[:space:]]*true\|ok:[[:space:]]*false' . \
+  --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v node_modules | head -1)
+```
+
+```bash
+# Detect helper paths imported by routes (TypeScript/JavaScript only in v1.6.0)
+HELPER_PATHS_FILE=$REVIEW_DIR/helper-paths.txt
+> $HELPER_PATHS_FILE
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    *.ts|*.tsx|*.js|*.jsx)
+      grep -oE "from ['\"]@?/?(lib|src/lib|utils)/[^'\"]+['\"]" "$f" 2>/dev/null \
+        | sed -E "s/from ['\"]|['\"]//g" >> $HELPER_PATHS_FILE
+      ;;
+  esac
+done < $API_ROUTES_FILE
+sort -u -o $HELPER_PATHS_FILE $HELPER_PATHS_FILE
+HELPER_COUNT=$(wc -l < $HELPER_PATHS_FILE | tr -d ' ')
+```
+
+**Determine activation.** Based on the detection results and any user flag
+(`--silent-failures` / `--no-silent-failures`), decide the activation state:
+
+- If user passed `--no-silent-failures`: `activation: SKIP (user override)`
+- Else if user passed `--silent-failures`: `activation: ACTIVATE (forced by flag)`
+- Else if `ROUTE_COUNT == 0`: `activation: SKIP (no API routes)`
+- Else if `DB_LIBS` is empty: `activation: SKIP (no DB library)`
+- Else if `ROUTE_COUNT < 5`: `activation: SKIP (below 5-route threshold)`
+- Else: `activation: ACTIVATE (auto, {ROUTE_COUNT} routes, db={DB_LIBS})`
+
+**Flag precedence:** `--no-silent-failures` > `--silent-failures` > auto.
+If both flags are passed (user error), treat as `--no-silent-failures`
+and emit a warning in orchestrator output.
+
+**Write `$REVIEW_DIR/api-surface.md`** with this schema:
+
+```markdown
+# API Surface Characterisation
+
+**Review date:** {YYYY-MM-DD}
+**DB libraries detected:** [{space-separated list, or empty}]
+**Languages:** [{typescript|python|go|...}]
+**Total API routes:** {ROUTE_COUNT}
+**Composite routes (≥3 DB queries):** {COMPOSITE_COUNT}
+**Helper walk supported:** {true if any TS/JS routes, else false}
+
+## Canonical Remediation Patterns
+
+- **Warnings envelope exemplar:** `{WARNINGS_EXEMPLAR or None detected}`
+- **Wrapper helper (sb/tryQuery):** `{SB_WRAPPER or None detected}`
+- **Result<T, E> type:** `{RESULT_TYPE or None detected}`
+
+## Helper Dependencies
+
+{HELPER_COUNT} helpers imported from API routes:
+{contents of helper-paths.txt, one per line}
+
+## Activation Decision
+
+silent-failure-hunter: **{ACTIVATE or SKIP (reason)}**
+
+## Route Inventory
+
+{contents of api-routes.txt, one per line — full absolute paths}
+
+## Composite Route Details
+
+{contents of composite-routes.txt — path and query count}
+```
+
+**Graceful degradation:** If any of the bash commands in this step fail
+(non-zero exit, missing commands, filesystem errors), write a stub
+`api-surface.md` with `activation: SKIP (reconnaissance failed)` plus
+the stderr content, and continue to step 1c. Do NOT abort the review.
+
 **1c. Run deterministic tools**
 
 Run whichever of these are available in the project. Capture output for review
@@ -436,6 +591,60 @@ Test Pattern and Production file fields.
 
 Use `subagent_type: "test-integrity-checker"` for this agent.
 
+**Silent-failure hunter agent (conditional on Wave 1 api-surface.md):**
+
+Read `$REVIEW_DIR/api-surface.md` and check the "Activation Decision" line.
+If it starts with `ACTIVATE`, spawn 1 `silent-failure-hunter` agent. If it
+starts with `SKIP`, log the skip reason and do NOT spawn.
+
+**The orchestrator inlines fields from `api-surface.md` into the hunter's
+prompt.** The hunter does NOT re-read the file — it receives everything it
+needs in the prompt. This keeps the agent's context tight.
+
+```
+## Task: Silent-failure detection across API routes and helpers
+
+## DB Libraries
+{comma-separated DB libraries from api-surface.md, e.g.: supabase, prisma}
+
+## Languages
+{comma-separated languages detected, e.g.: typescript, python}
+
+## Total API Routes
+{total_api_routes from api-surface.md}
+
+## Composite Routes (≥3 DB queries — candidates for H-Composite check)
+{full content of composite-routes.txt, or "None detected"}
+
+## Canonical Remediation Patterns
+{Full "Canonical Remediation Patterns" section from api-surface.md —
+ warnings envelope exemplar, sb() wrapper path, Result<T,E> path}
+
+## Helper Paths (walk these alongside routes — for H-Helper-Cascade)
+{full content of helper-paths.txt, or "None"}
+
+## Route Inventory
+{full content of api-routes.txt — absolute paths, one per line}
+
+## Heuristic Reference
+The silent-failure-playbook.md ships with the plugin. Discover it via:
+  find ~/.claude/plugins -path "*/codebase-review/references/silent-failure-playbook.md"
+Read it in full before starting heuristic scans.
+
+## Known Issues — DO NOT re-flag these
+{full content of deterministic-findings.md}
+
+## Test Baseline
+{Path to test-baseline.md, or "Unavailable"}
+
+## Output
+Write your findings to: {REVIEW_DIR}/silent-failure-findings.md
+Use the finding format defined in your agent instructions (Category:
+Silent Failure + Pattern ID field).
+```
+
+Use `subagent_type: "silent-failure-hunter"` for this agent.
+
 After launching all agents, report progress to the user as each agent completes
 rather than waiting silently. Example: "Agent 3/6 complete (lib/ scope — found
 8 issues)." This gives the user visibility during what can be a 15-20 minute
@@ -444,8 +653,8 @@ wait.
 Once ALL agents have completed, verify:
 
 ```bash
-ls -la $REVIEW_DIR/scope-*-findings.md $REVIEW_DIR/pattern-checker-findings.md $REVIEW_DIR/test-integrity-findings.md 2>/dev/null | wc -l
-# Should match: scope agents + 1 (pattern checker) + 1 (test integrity, if active)
+ls -la $REVIEW_DIR/scope-*-findings.md $REVIEW_DIR/pattern-checker-findings.md $REVIEW_DIR/test-integrity-findings.md $REVIEW_DIR/silent-failure-findings.md 2>/dev/null | wc -l
+# Should match: scope agents + 1 (pattern checker) + 1 (test integrity, if active) + 1 (silent-failure-hunter, if activated)
 ```
 
 Read the header of each findings file to get the counts. If any agent failed
@@ -461,8 +670,9 @@ Spawn 1 `review-synthesizer` agent with this prompt:
 ## Task: Triage review findings
 
 ## Input Files
-{list all scope-N-findings.md, pattern-checker-findings.md, AND test-integrity-findings.md
-(if test integrity checking was active) paths that were successfully written}
+{list all scope-N-findings.md, pattern-checker-findings.md, test-integrity-findings.md
+(if test integrity checking was active), AND silent-failure-findings.md
+(if silent-failure-hunter activated) paths that were successfully written}
 
 ## Deterministic Findings
 {path to deterministic-findings.md}
@@ -477,13 +687,34 @@ Spawn 1 `review-synthesizer` agent with this prompt:
 Write deduplicated, ranked findings to: {REVIEW_DIR}/triage-findings.md
 
 ## Instructions
-1. Read ALL scope findings files
+1. Read ALL scope findings files (scope-*-findings.md, pattern-checker-findings.md,
+   test-integrity-findings.md if present, silent-failure-findings.md if present).
 2. Deduplicate — merge findings about the same issue across scopes.
-   **Pattern checker subsumption:** When a pattern-checker finding identifies
-   a systemic issue and scope agents flagged individual instances of the same
-   issue, keep ONLY the pattern-checker finding. Reference the scope findings
-   as instances within it, merging any additional evidence. Do not keep
-   subsumed scope findings as separate entries.
+
+   **Finding subsumption rules (apply in order):**
+
+   a. **Silent-failure-hunter > pattern-checker** for Pattern IDs in
+      {H7.a, H7.b, H-Resolver, H-Composite, H-Helper-Cascade}. When
+      silent-failure-hunter flagged a finding with one of these pattern
+      IDs, it is authoritative. Discard any pattern-checker finding on
+      the same file referencing the same pattern.
+
+   b. **Pattern-checker > scope agents** for systemic issues. When a
+      pattern-checker finding identifies a systemic issue and scope
+      agents flagged individual instances, keep ONLY the pattern-checker
+      finding. Reference the scope findings as instances within it,
+      merging any additional evidence. Do not keep subsumed scope
+      findings as separate entries.
+
+   c. **Silent-failure-hunter vs pattern-checker on H4/H5** (universal
+      patterns): the hunter's critical rules forbid it from flagging
+      generic H4/H5 patterns outside API route bodies, so this overlap
+      should not occur. If it does, prefer the pattern-checker finding
+      and log the violation in the triage notes.
+
+   d. **Deduplicate by (file_path, line_range, pattern_id)** after
+      applying rules a-c. Last wins within identical tuples.
+
 3. Rank by severity then confidence
 4. Remove any findings that duplicate deterministic tool output
 5. Separate findings into two groups:
@@ -940,6 +1171,49 @@ verification (Wave 4), and reporting (Wave 5) pipeline with category
 **Auto-activation:** If not explicitly set, test integrity checking
 activates automatically when test files comprise >10% of the codebase
 by file count (indicating meaningful test investment worth checking).
+
+### `--silent-failures` / `--no-silent-failures`
+
+Control silent-failure-hunter activation in Wave 2. Spawns an additional
+`silent-failure-hunter` agent that detects silent-failure bugs across API
+routes and their `lib/` helper dependencies. Runs 9 detection heuristics:
+
+1. **H7.a** — Supabase `{ data }` destructured without `error` (the #1
+   pattern — 30+ instances in the Knowledge Hub S151 audit)
+2. **H7.b** — Supabase mutation with discarded return value (RLS silent
+   no-op)
+3. **H3** — Loop with `console.error`, no `failed[]` array
+4. **H4** — Bare empty catch (Python `except: pass`, Go `if err != nil { }`,
+   `_ = fn()`). TypeScript empty catches are covered by the existing
+   pattern-checker rule to avoid duplication.
+5. **H5** — `.then(...).catch(() => fallback)` ignoring error parameter
+6. **H6** — Mock data returned on missing env var (`return mockData`)
+7. **H-Resolver** — Helper returns `T | null` conflating "not found"
+   with "lookup failed"
+8. **H-Composite** — Fan-out endpoint with ≥3 sub-queries lacking a
+   `warnings[]` envelope
+9. **H-Helper-Cascade** — severity bump when a helper with a silent
+   failure is called by ≥3 routes
+
+Silent-failure findings flow through the standard triage (Wave 3),
+verification (Wave 4), and reporting (Wave 5) pipeline with category
+`Silent Failure` and a `Pattern ID` field for deduplication. They also
+integrate with Wave 6 spec generation.
+
+**Auto-activation:** If not explicitly set, silent-failure detection
+activates automatically when Wave 1 detects ≥5 API routes AND at least
+one DB library (Supabase, Prisma, Drizzle, TypeORM, SQLAlchemy, Django,
+gorm, etc.). Below the threshold or without a DB library, the hunter
+is skipped — the pattern-checker's universal rules still run.
+
+**Flag precedence:** `--no-silent-failures` > `--silent-failures` > auto.
+If both flags are passed (user error), treat as `--no-silent-failures`
+and emit a warning. `--silent-failures` forces activation even on
+small codebases or codebases without detected DB libraries (in which
+case only the universal rules run). `--no-silent-failures` skips the
+hunter regardless of activation criteria.
+
+The flag is independent of `--test-integrity` — they do not cascade.
 
 ### `--verify-all`
 
