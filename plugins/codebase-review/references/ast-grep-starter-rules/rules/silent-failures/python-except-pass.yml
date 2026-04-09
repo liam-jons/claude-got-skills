@@ -1,0 +1,26 @@
+id: python-except-pass
+language: python
+severity: warning
+message: "Bare `except: pass` silently swallows all exceptions including SystemExit and KeyboardInterrupt."
+note: |
+  Catches far more than intended and provides no failure signal. Use
+  `except SpecificError as e: logger.warning(...)` or a sentinel fallback
+  with an explanatory comment. `except Exception: pass` is equally bad —
+  the base `Exception` class covers every non-system-exit error.
+rule:
+  any:
+    - pattern: |
+        try:
+            $$$BODY
+        except:
+            pass
+    - pattern: |
+        try:
+            $$$BODY
+        except Exception:
+            pass
+    - pattern: |
+        try:
+            $$$BODY
+        except Exception as $E:
+            pass
