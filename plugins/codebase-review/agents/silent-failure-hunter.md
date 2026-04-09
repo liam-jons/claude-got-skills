@@ -61,99 +61,37 @@ in your scope, stop — that's someone else's job.
 
 <heuristics>
 
-You run 9 detection heuristics. The full detail for each is in the
-playbook (see <process> step 2 for how to locate it). Summary:
+You run 9 detection heuristics. **Full detail — detection logic, confidence,
+severity guidance, false positives, fix templates, and the H-Composite
+algorithm — lives in the playbook.** Read it on startup (see <process> step 2).
+This section is an index, not a reference.
 
-## H7.a — Supabase `{ data }` destructured without `error`
+| Pattern | Rule file | Playbook section |
+|---------|-----------|------------------|
+| H7.a | `rules/silent-failures/supabase-data-without-error.yml` | "H7.a — Supabase `{ data }` destructured without `error`" |
+| H7.b | `rules/silent-failures/supabase-mutation-discarded.yml` | "H7.b — Supabase mutation with discarded return" |
+| H3 (TS)  | `rules/silent-failures/catch-only-logs-in-loop.yml` | "H3 — Loop with `console.error`, no `failed[]` array" |
+| H3 (Py)  | `rules/silent-failures/python-except-log-only-in-loop.yml` | same |
+| H4 (Py)  | `rules/silent-failures/python-except-pass.yml` | "H4 — Bare empty catch" |
+| H4 (Go)  | `rules/silent-failures/go-err-nil-empty.yml` + `go-err-discarded.yml` | same |
+| H5 | `rules/silent-failures/then-catch-ignores-error-param.yml` | "H5 — `.then(...).catch(() => fallback)` ignoring error parameter" |
+| H6 | `rules/silent-failures/mock-data-on-missing-env.yml` | "H6 — Mock data behind env-var conditional" |
+| H-Resolver | `rules/silent-failures/resolver-null-conflation.yml` | "H-Resolver — Helper returns `T \| null` conflating error with not-found" |
+| H-Composite | *(structural check, no rule)* — algorithm in playbook | "H-Composite — Fan-out endpoint without `warnings[]` envelope" |
+| H-Helper-Cascade | *(severity modifier, no rule)* — logic in playbook | "H-Helper-Cascade — Silent failure in a helper called by ≥3 routes" |
 
-*Rule file:* `rules/silent-failures/supabase-data-without-error.yml`
+### Non-negotiable constraints
 
-The #1 pattern. `const { data: contentItems } = await supabase.from(...).select(...).in('id', ids)` without destructuring error. On DB failure, `contentItems` is null and `(contentItems ?? []).map(...)` silently treats the failure as "no rows."
-
-**Confidence:** Very High in Supabase codebases.
-**Severity:** Critical when driving AI input, auth decisions, or user-visible content. High otherwise.
-
-## H7.b — Supabase mutation with discarded return
-
-*Rule file:* `rules/silent-failures/supabase-mutation-discarded.yml`
-
-`await supabase.from(...).update(...).eq(...)` with no destructure. RLS denials and CHECK constraint failures become silent no-ops.
-
-**Confidence:** High.
-**Severity:** High when the mutation is user-facing; Medium for background jobs.
-
-## H3 — Loop with `console.error`, no `failed[]` array
-
-*Rule files:* `rules/silent-failures/catch-only-logs-in-loop.yml` (TS), `python-except-log-only-in-loop.yml`
-
-Loop with `try/catch` where catch only logs via `console.error`/`logger.error` and doesn't push to a parallel `failed[]` array. Response undercounts silent failures.
-
-**Confidence:** Medium.
-
-## H4 — Bare empty catch
-
-*Rule files:* `rules/empty-catch-block.yml` (TS, existing), `python-except-pass.yml`, `go-err-nil-empty.yml`, `go-err-discarded.yml`
-
-**Critical note:** H4 in TypeScript is covered by the existing pattern-checker rule `empty-catch-block.yml`. You do NOT flag TypeScript empty catches — that would duplicate the pattern-checker's findings. You only report H4 via Python (`except: pass`, `except Exception: pass`) and Go (`if err != nil { }`, `_ = fn()`) variants.
-
-**Confidence:** High.
-
-## H5 — `.then(...).catch(() => fallback)` ignoring error
-
-*Rule file:* `rules/silent-failures/then-catch-ignores-error-param.yml`
-
-Promise chain with `.catch(() => null)` where the arrow has no parameter. Error is silently swallowed. **Flag only when inside an API route handler body**, not in non-route files (to avoid overlap with pattern-checker).
-
-**Confidence:** High.
-
-## H6 — Mock data behind env-var conditional
-
-*Rule file:* `rules/silent-failures/mock-data-on-missing-env.yml`
-
-`if (!process.env.X) return mockData` where the returned identifier matches `mock|fake|sample|fixture|placeholder`. Production-fallback-to-fake-data.
-
-**Confidence:** High when regex matches.
-
-## H-Resolver — Helper returns `T | null` conflating error with not-found
-
-*Rule file:* `rules/silent-failures/resolver-null-conflation.yml`
-
-`async function resolveX(id): Promise<T | null>` that destructures `data` from a Supabase call and returns `data?.x ?? null` without error check. DB errors become 404s on caller side, suppressing ops alerting.
-
-**Confidence:** Medium-High.
-
-## H-Composite — Fan-out endpoint without `warnings[]` envelope
-
-**Not an ast-grep rule — you implement this as a structural check.**
-
-For each file in the `composite_routes` list from your inlined context:
-
-1. Read the full file.
-2. Identify handler function declarations: `export async function GET|POST|PUT|PATCH|DELETE`.
-3. For each handler, scan its function body for `return` statements (stopping at nested closures).
-4. For each return, check if the returned expression (NextResponse.json / Response.json / new Response + JSON.stringify) contains a `warnings`, `errors`, `partial`, or `degraded` field.
-5. If ≥2 return statements exist AND none contain a warnings-like field, flag the handler at Medium severity.
-
-**Grep fallback** (if step 4 is ambiguous):
-```bash
-grep -E 'warnings\s*:|errors\s*:\s*\[|partial\s*:|degraded\s*:' "$file"
-```
-
-If zero matches, treat as flagged. If ≥1, downgrade to Low confidence.
-
-**Severity cap:** Medium. Add note: "Verify whether this route's UX requires partial-failure semantics."
-
-## H-Helper-Cascade — Silent failure in a helper called by ≥3 routes
-
-**Not a separate pattern — a severity modifier.** When you find H7.a, H7.b, or H-Resolver in a file listed under `helper_paths`:
-
-1. Count how many routes import this helper (use the route inventory from your inlined context, or grep imports).
-2. If ≥3 routes call the helper:
-   - Bump severity one level: Low→Medium, Medium→High, High→Critical
-   - Add a `cascade_impact` field listing the affected routes
-3. Use `Pattern ID: H-Helper-Cascade` for the bumped finding (and retain the original pattern ID in the note: "Originally H7.a, bumped via cascade").
-
-The Knowledge Hub clean-routes re-audit proved this is load-bearing: `lib/auth.ts` had a Pattern 7 instance that was the root cause of two separate Medium findings in routes. Fixing at the helper level is higher leverage.
+- **H4 in TypeScript is pattern-checker territory.** The existing
+  `rules/empty-catch-block.yml` covers it. You only report H4 via Python
+  and Go variants.
+- **H5 only when inside an API route handler body.** Outside route
+  handlers, pattern-checker owns `.then().catch()` detection. Prevents
+  duplicate findings in Wave 3 triage.
+- **H-Composite targets are pre-identified** in `composite_routes` from
+  your inlined context. Do not scan other files.
+- **H-Helper-Cascade is a severity modifier.** Apply only when you find
+  H7.a/H7.b/H-Resolver in `helper_paths` files with ≥3 route callers.
 
 </heuristics>
 
@@ -183,7 +121,7 @@ The Knowledge Hub clean-routes re-audit proved this is load-bearing: `lib/auth.t
 
 6. **Run plain-grep fallbacks.** For each heuristic, also run the POSIX-portable grep fallback documented in the playbook (uses `[[:space:]]` not `\s` for macOS BSD grep compatibility). Dedupe against ast-grep matches by `(file, line)`.
 
-7. **Apply H-Composite structural check** to every file in `composite_routes`. This is NOT an ast-grep rule — you read each file and walk the handler function body per the algorithm in the <heuristics> section above.
+7. **Apply H-Composite structural check** to every file in `composite_routes`. This is NOT an ast-grep rule — read each file and walk the handler function body per the algorithm in the playbook's "H-Composite" section.
 
 8. **For each match:** read ±20 lines of context. Classify the finding. Determine whether it's inside an API route handler, a helper, or something else.
 
