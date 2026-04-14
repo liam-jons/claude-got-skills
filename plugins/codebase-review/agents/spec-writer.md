@@ -25,7 +25,8 @@ description: |
   and generates specs from the most recent review's findings.json.
   </commentary>
   </example>
-model: inherit
+model: opus
+effort: high
 color: green
 tools: ["Read", "Write", "Bash", "Grep", "Glob"]
 ---

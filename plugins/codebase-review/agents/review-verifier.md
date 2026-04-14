@@ -26,7 +26,8 @@ description: |
   Can also be used standalone to verify a specific suspected issue.
   </commentary>
   </example>
-model: inherit
+model: opus
+effort: high
 color: red
 tools: ["Read", "Bash", "Grep", "Glob"]
 ---

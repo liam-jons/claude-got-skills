@@ -26,7 +26,8 @@ description: |
   Manual override for small codebases or codebases where auto-detection missed the DB library.
   </commentary>
   </example>
-model: inherit
+model: sonnet
+effort: high
 color: yellow
 tools: ["Read", "Bash", "Grep", "Glob"]
 ---

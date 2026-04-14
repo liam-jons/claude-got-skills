@@ -26,7 +26,8 @@ description: |
   REVIEW-REPORT.md combining verified and accepted findings.
   </commentary>
   </example>
-model: inherit
+model: opus
+effort: high
 color: yellow
 tools: ["Read", "Write", "Bash", "Grep", "Glob"]
 ---

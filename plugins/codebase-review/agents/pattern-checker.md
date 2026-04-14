@@ -26,7 +26,8 @@ description: |
   Can also be used standalone for targeted pattern analysis.
   </commentary>
   </example>
-model: inherit
+model: sonnet
+effort: high
 color: magenta
 tools: ["Read", "Bash", "Grep", "Glob"]
 ---

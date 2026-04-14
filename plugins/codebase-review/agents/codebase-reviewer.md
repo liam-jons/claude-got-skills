@@ -25,7 +25,8 @@ description: |
   Can also be used standalone to review a specific directory scope.
   </commentary>
   </example>
-model: inherit
+model: sonnet
+effort: high
 color: cyan
 tools: ["Read", "Bash", "Grep", "Glob"]
 ---

@@ -34,8 +34,12 @@ Runs a multi-wave review of your entire codebase:
 ## Requirements
 
 - **Claude Code** (Anthropic's CLI tool)
-- **Claude Opus access** — the orchestrator uses Opus for coordination logic.
-  Subagents inherit the parent model.
+- **Claude Opus and Sonnet access** — the orchestrator and judgment-heavy
+  subagents (synthesizer, verifier, spec-writer) use Opus; parallel scanning
+  subagents (reviewer, pattern-checker, silent-failure-hunter,
+  test-integrity-checker) use Sonnet. All run at `effort: high`.
+  If `CLAUDE_CODE_SUBAGENT_MODEL` is set in your settings, it overrides the
+  per-agent frontmatter — unset it to let the plugin's model mix apply.
 
 ### What to expect
 

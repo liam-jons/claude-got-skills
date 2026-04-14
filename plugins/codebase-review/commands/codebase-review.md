@@ -8,6 +8,7 @@ allowed-tools:
   - Write
 description: Run a comprehensive codebase quality review with parallel agents
 model: opus
+effort: high
 ---
 
 # Codebase Review

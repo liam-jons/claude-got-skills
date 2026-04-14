@@ -27,7 +27,8 @@ description: |
   codebase review.
   </commentary>
   </example>
-model: inherit
+model: sonnet
+effort: high
 color: blue
 tools: ["Read", "Bash", "Grep", "Glob"]
 ---
